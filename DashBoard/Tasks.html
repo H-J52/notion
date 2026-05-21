@@ -47,7 +47,7 @@ html, body {
   margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0;
 }
 .wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
-.ilist { display: flex; flex-direction: column; gap: 6px; height: 315px; min-height: 315px; overflow-y: auto; flex-shrink: 0; }
+.ilist { display: flex; flex-direction: column; gap: 6px; height: 317px; min-height: 317px; overflow-y: auto; flex-shrink: 0; }
 .ii {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; height: 42px;
@@ -188,7 +188,7 @@ function renderT() {
       <div class="iprio ${prioClass(t.p)}"></div>
       <div class="ichk"></div>
       <span class="itext">${t.t}</span>
-      ${t.tag ? `<span class="itag">${t.tag}</span>` : ''}
+      ${(t.tags||[]).map(tag=>`<span class="itag">${tag}</span>`).join('')}
       ${isCarried && !t.done ? `<span class="idate">${formatDate(t.createdAt)}</span>` : ''}
       <button class="xbtn" onclick="delT('${t.pageId}', event)">✕</button>
     `;
@@ -245,7 +245,7 @@ async function loadFromNotion() {
       pageId: p.id,
       t: p.properties.Task.title[0]?.plain_text || '',
       p: p.properties.Priority?.select?.name || '중간',
-      tag: p.properties.Tag?.multi_select?.[0]?.name || '',
+      tags: (p.properties.Tag?.multi_select || []).map(t => t.name),
       done: p.properties.Status?.select?.name === 'Done',
       createdAt: p.created_time
     }));
@@ -294,7 +294,7 @@ async function addT() {
       })
     });
     const page = await res.json();
-    tasks.unshift({ pageId: page.id, t, p, tag, done: false, createdAt: new Date().toISOString() });
+    tasks.unshift({ pageId: page.id, t, p, tags: tag ? [tag] : [], done: false, createdAt: new Date().toISOString() });
     renderT();
   } catch(e) { showToast('추가 실패'); }
 }
