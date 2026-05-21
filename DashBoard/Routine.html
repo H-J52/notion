@@ -22,34 +22,30 @@
   --font:  'DM Mono', monospace;
 }
 html, body {
-  min-height: 420px !important;
   background: var(--bg);
   color: var(--tx);
   font-family: var(--font);
   font-size: 13px;
   margin: 0; padding: 0;
-  /* 고정 높이: 6개 아이템 기준 */
-  width: 100%;
-  height: 420px;
   overflow: hidden;
 }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
 .w {
   background: var(--s1);
   border: 1px solid var(--b2);
   border-radius: 0;
   padding: 20px 22px;
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 .wlabel {
   font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--tx3); display: flex; align-items: center; gap: 6px;
-  margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif;
-  flex-shrink: 0;
+  margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0;
 }
 .wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
-.wlabel-r { margin-left: auto; }
+.wlabel-r { margin-left: auto; display: flex; gap: 8px; }
 .wlbtn {
   font-size: 9px; color: var(--tx3); background: none; border: none;
   font-family: var(--font); cursor: pointer; letter-spacing: 0.08em;
@@ -61,12 +57,11 @@ html, body {
 .pval { font-size: 10px; color: var(--green); }
 .ptrack { height: 2px; background: var(--b1); border-radius: 1px; overflow: hidden; margin-bottom: 14px; flex-shrink: 0; }
 .pfill { height: 100%; border-radius: 1px; background: var(--green); transition: width 0.4s cubic-bezier(.4,0,.2,1); }
-.ilist { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; }
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+/* 6개 고정: 아이템 42px + gap 6px = 48px * 6 - 6px = 282px */
+.ilist { display: flex; flex-direction: column; gap: 6px; min-height: 282px; height: 282px; overflow-y: auto; flex-shrink: 0; }
 .ii {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; min-height: 42px;
+  padding: 10px 12px; height: 42px;
   background: var(--s2); border: 1px solid var(--b1);
   border-radius: 8px; cursor: pointer; user-select: none;
   transition: border-color 0.12s; flex-shrink: 0;
@@ -74,6 +69,7 @@ html, body {
 .ii:hover { border-color: var(--b2); }
 .ii:hover .xbtn { opacity: 1; }
 .ii.done { opacity: 0.35; }
+.ii.ghost { opacity: 0; pointer-events: none; }
 .ichk {
   width: 15px; height: 15px; border: 1.5px solid var(--b3);
   border-radius: 4px; flex-shrink: 0;
@@ -107,10 +103,16 @@ html, body {
   background: var(--s2); border: 1px solid var(--b2);
   border-radius: 7px; padding: 8px 14px;
   font-size: 11px; color: var(--green); font-family: var(--font);
-  cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
 .abtn:hover { background: var(--b1); }
-.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
+.toast {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--b2); color: var(--tx); font-size: 11px;
+  padding: 8px 16px; border-radius: 8px; pointer-events: none;
+  opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99;
+}
+.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -132,84 +134,159 @@ html, body {
     <button class="abtn" onclick="addR()">추가</button>
   </div>
 </div>
+<div class="toast" id="toast"></div>
+
 <script>
-const STORAGE_KEY = 'devflow_routine';
-const DATE_KEY    = 'devflow_routine_date';
-let S = {
-  routines: [
-    {id:1, t:'🌅 침대 정리',  done:false},
-    {id:2, t:'💧 물 마시기',  done:false},
-    {id:3, t:'🧠 25분 집중', done:false},
-    {id:4, t:'💪 가볍게 운동',done:false},
-    {id:5, t:'📖 독서 20분', done:false},
-    {id:6, t:'🌙 오늘 회고', done:false},
-  ],
-  seed: 7
-};
-function toDateStr(d){ return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
-function rpct(){
-  const done = S.routines.filter(r=>r.done).length;
-  const total = S.routines.length;
-  return total ? Math.round(done/total*100) : 0;
+const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID  = '962fcac506f04e3fbecc03143c27ef15';
+const DATE_KEY = 'devflow_routine_date';
+const MIN_SLOTS = 6;
+
+let routines = []; // {id, pageId, t, done}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
 }
-function renderR(){
+
+function toDateStr(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+function rpct() {
+  if (!routines.length) return 0;
+  return Math.round(routines.filter(r => r.done).length / routines.length * 100);
+}
+
+function renderR() {
   const pct = rpct();
   document.getElementById('r-pct').textContent = pct + '%';
   document.getElementById('r-bar').style.width = pct + '%';
   const el = document.getElementById('r-list');
   el.innerHTML = '';
-  const MIN_SLOTS = 6;
-  S.routines.forEach(r => {
+  routines.forEach(r => {
     const d = document.createElement('div');
     d.className = 'ii' + (r.done ? ' done' : '');
-    d.innerHTML = `<div class="ichk"></div><span class="itext">${r.t}</span><button class="xbtn" onclick="delR(${r.id},event)">✕</button>`;
-    d.onclick = e => { if(e.target.classList.contains('xbtn')) return; r.done = !r.done; renderR(); saveState(); };
+    d.innerHTML = `<div class="ichk"></div><span class="itext">${r.t}</span><button class="xbtn" onclick="delR('${r.pageId}',event)">✕</button>`;
+    d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleR(r); };
     el.appendChild(d);
   });
-  // 6개 미만이면 투명 더미로 채우기
-  const ghostCount = MIN_SLOTS - S.routines.length;
-  for(let i = 0; i < ghostCount; i++){
+  // 6개 미만이면 투명 더미
+  const ghostCount = MIN_SLOTS - routines.length;
+  for (let i = 0; i < ghostCount; i++) {
     const g = document.createElement('div');
-    g.className = 'ii';
-    g.style.cssText = 'opacity:0; pointer-events:none;';
+    g.className = 'ii ghost';
     g.innerHTML = '<div class="ichk"></div><span class="itext">·</span>';
     el.appendChild(g);
   }
-  saveState();
 }
-function addR(){
+
+async function loadFromNotion() {
+  try {
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sorts: [{ property: 'Order', direction: 'ascending' }] })
+    });
+    const data = await res.json();
+    routines = data.results.map(p => ({
+      pageId: p.id,
+      t: p.properties.Routine.title[0]?.plain_text || '',
+      done: p.properties.Done.checkbox
+    }));
+    renderR();
+    checkDayReset();
+  } catch(e) {
+    showToast('로드 실패');
+  }
+}
+
+async function toggleR(r) {
+  r.done = !r.done;
+  renderR();
+  try {
+    await fetch(`${PROXY}?path=pages/${r.pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ properties: { Done: { checkbox: r.done } } })
+    });
+  } catch(e) {
+    showToast('저장 실패');
+  }
+}
+
+async function addR() {
   const t = document.getElementById('r-inp').value.trim();
-  if(!t) return;
-  S.routines.push({id: S.seed++, t, done: false});
+  if (!t) return;
   document.getElementById('r-inp').value = '';
-  renderR();
+  try {
+    const res = await fetch(`${PROXY}?path=pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parent: { database_id: DB_ID },
+        properties: {
+          Routine: { title: [{ text: { content: t } }] },
+          Done: { checkbox: false },
+          Order: { number: routines.length + 1 }
+        }
+      })
+    });
+    const page = await res.json();
+    routines.push({ pageId: page.id, t, done: false });
+    renderR();
+  } catch(e) {
+    showToast('추가 실패');
+  }
 }
-function delR(id, e){
+
+async function delR(pageId, e) {
   e.stopPropagation();
-  S.routines = S.routines.filter(r => r.id !== id);
+  try {
+    await fetch(`${PROXY}?path=pages/${pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived: true })
+    });
+    routines = routines.filter(r => r.pageId !== pageId);
+    renderR();
+  } catch(e) {
+    showToast('삭제 실패');
+  }
+}
+
+async function resetRoutine() {
+  for (const r of routines) {
+    r.done = false;
+    await fetch(`${PROXY}?path=pages/${r.pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ properties: { Done: { checkbox: false } } })
+    });
+  }
   renderR();
+  showToast('루틴 초기화됨');
 }
-function resetRoutine(){
-  S.routines.forEach(r => r.done = false);
-  renderR();
-}
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }
-function loadState(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw){ try{ S = JSON.parse(raw); }catch(e){} }
-}
-function checkDayReset(){
+
+async function checkDayReset() {
   const today = toDateStr(new Date());
   const last  = localStorage.getItem(DATE_KEY);
-  if(last && last !== today){ S.routines.forEach(r => r.done = false); saveState(); }
+  if (last && last !== today) {
+    await resetRoutine();
+  }
   localStorage.setItem(DATE_KEY, today);
 }
-loadState(); checkDayReset(); renderR();
-setInterval(() => {
+
+loadFromNotion();
+
+// 자정 체크
+setInterval(async () => {
   const today = toDateStr(new Date());
-  if(localStorage.getItem(DATE_KEY) !== today){ checkDayReset(); renderR(); }
+  if (localStorage.getItem(DATE_KEY) !== today) {
+    await resetRoutine();
+    localStorage.setItem(DATE_KEY, today);
+  }
 }, 60000);
 </script>
-<div style="min-height:420px;pointer-events:none;"></div>
 </body>
 </html>
