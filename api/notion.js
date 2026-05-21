@@ -1,5 +1,4 @@
-export default async function handler(req, res) {
-  // CORS 허용
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Notion-Version');
@@ -13,8 +12,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'NOTION_API_KEY not set' });
   }
 
-  // URL에서 Notion API 경로 추출
-  // 예: /api/notion?path=databases/DB_ID/query
   const notionPath = req.query.path;
   if (!notionPath) {
     return res.status(400).json({ error: 'path query parameter required' });
