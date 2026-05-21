@@ -48,7 +48,7 @@ html, body {
 }
 .wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
 /* 루틴과 동일: 6개 기준 높이 (42px * 6 + 6px * 5 = 282px) */
-.ilist { display: flex; flex-direction: column; gap: 6px; height: 282px; min-height: 282px; overflow-y: auto; flex-shrink: 0; }
+.ilist { display: flex; flex-direction: column; gap: 6px; height: 312px; min-height: 312px; overflow-y: auto; flex-shrink: 0; }
 .ii {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; height: 42px;
@@ -237,7 +237,7 @@ async function toggleT(t) {
         properties: {
           Status: { select: { name: t.done ? 'Done' : 'Todo' } },
           // 체크 시 Due Date에 완료 시간 기록
-          ...(t.done ? { 'Due Date': { date: { start: now } } } : { 'Due Date': { date: null } })
+          ...(t.done ? { 'Completed At': { date: { start: now } } } : { 'Completed At': { date: null } })
         }
       })
     });
