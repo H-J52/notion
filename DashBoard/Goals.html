@@ -163,7 +163,7 @@ function renderG() {
     d.innerHTML = `
       <div class="ichk"></div>
       <span class="itext">${g.t}</span>
-      ${g.tag ? `<span class="itag">${g.tag}</span>` : ''}
+      ${(g.tags||[]).map(tag=>`<span class="itag">${tag}</span>`).join('')}
       <button class="xbtn" onclick="delG('${g.pageId}', event)">✕</button>
     `;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleG(g); };
@@ -204,7 +204,7 @@ async function loadFromNotion() {
     goals = data.results.map(p => ({
       pageId: p.id,
       t: p.properties.Goal.title[0]?.plain_text || '',
-      tag: p.properties.Tag?.multi_select?.[0]?.name || '',
+      tags: (p.properties.Tag?.multi_select || []).map(t => t.name),
       done: p.properties.Status?.select?.name === 'Done'
     }));
     renderG();
@@ -248,7 +248,7 @@ async function addG() {
       })
     });
     const page = await res.json();
-    goals.push({ pageId: page.id, t, tag, done: false });
+    goals.push({ pageId: page.id, t, tags: tag ? [tag] : [], done: false });
     renderG();
   } catch(e) { showToast('추가 실패'); }
 }
