@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #0d0d0e;
+  --s1:    #141415;
+  --s2:    #1a1a1c;
+  --b1:    #232326;
+  --b2:    #2e2e32;
+  --b3:    #3a3a3f;
+  --tx:    #e5e5e9;
+  --tx2:   #7c7c88;
+  --tx3:   #404048;
+  --green: #6effa0;
+  --red:   #ff6060;
+  --yel:   #ffd166;
+  --teal:  #4ecdc4;
+  --font:  'DM Mono', monospace;
+}
+html, body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font);
+  font-size: 13px;
+  margin: 0; padding: 0;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+.w {
+  background: var(--s1);
+  border: 1px solid var(--b2);
+  border-radius: 0;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+}
+.wlabel {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--tx3); display: flex; align-items: center; gap: 6px;
+  margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0;
+}
+.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+.pj-list { display: flex; flex-direction: column; gap: 8px; height: 282px; min-height: 282px; overflow-y: auto; flex-shrink: 0; }
+.pji {
+  padding: 12px 14px;
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; transition: border-color 0.12s; flex-shrink: 0;
+}
+.pji:hover { border-color: var(--b2); }
+.pji:hover .xbtn { opacity: 1 !important; }
+.pji-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.pji-name { font-family: 'Black Han Sans', sans-serif; font-size: 13px; color: var(--tx); }
+.pji-right { display: flex; align-items: center; gap: 6px; }
+.pji-st {
+  font-size: 8px; letter-spacing: 0.07em; padding: 2px 7px;
+  border-radius: 3px; border: 1px solid; color: var(--yel); border-color: var(--yel);
+}
+.pji-st.done { color: var(--green); border-color: var(--green); }
+.pji-st.hold { color: var(--tx3); border-color: var(--tx3); }
+.xbtn {
+  font-size: 10px; color: var(--tx3); background: none; border: none;
+  cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s;
+  font-family: var(--font); padding: 0 2px;
+}
+.xbtn:hover { color: var(--red); }
+.pji-bar-wrap {
+  position: relative; height: 6px; background: var(--b1);
+  border-radius: 3px; cursor: pointer; overflow: hidden;
+}
+.pji-bar-wrap:hover { background: var(--b2); }
+.pji-fill { height: 100%; border-radius: 3px; background: var(--teal); transition: width 0.2s ease; }
+.pji-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+.pji-pct {
+  font-size: 10px; color: var(--teal); cursor: text;
+  border: none; background: transparent; font-family: var(--font);
+  width: 36px; outline: none; padding: 1px 0;
+}
+.pji-pct:focus { color: var(--tx); border-bottom: 1px solid var(--b3); }
+.pji-tags { display: flex; gap: 3px; flex-wrap: wrap; align-items: center; }
+.pji-tag {
+  font-size: 9px; color: var(--tx3); border: 1px solid var(--b1);
+  border-radius: 3px; padding: 1px 4px;
+}
+.pji-ghost { opacity: 0; pointer-events: none; height: 76px; flex-shrink: 0; }
+.add-row { display: flex; gap: 6px; margin-top: 10px; flex-shrink: 0; }
+.ainput {
+  flex: 1; background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 7px; padding: 8px 11px;
+  font-size: 11px; color: var(--tx); font-family: var(--font);
+  outline: none; transition: border-color 0.15s;
+}
+.ainput:focus { border-color: var(--b3); }
+.ainput::placeholder { color: var(--tx3); }
+.abtn {
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 7px; padding: 8px 14px;
+  font-size: 11px; color: var(--teal); font-family: var(--font);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.abtn:hover { background: var(--b1); }
+.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
+.toast {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--b2); color: var(--tx); font-size: 11px;
+  padding: 8px 16px; border-radius: 8px; pointer-events: none;
+  opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="wlabel">
+    <span class="wdot"></span>Game Dev
+  </div>
+  <div class="pj-list" id="pj-list"></div>
+  <div class="add-row">
+    <input class="ainput" id="pj-inp" placeholder="+ 프로젝트 추가..." onkeydown="if(event.key==='Enter')addPj()">
+    <button class="abtn" onclick="addPj()">추가</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID  = '04afb677006541d5a50fa770f9a8fba8';
+const MIN_SLOTS = 3;
+
+let projects = [];
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function statusLabel(s) {
+  if (s === '완료') return '<span class="pji-st done">완료</span>';
+  if (s === '보류') return '<span class="pji-st hold">보류</span>';
+  return '<span class="pji-st">진행중</span>';
+}
+
+function renderPj() {
+  const el = document.getElementById('pj-list');
+  el.innerHTML = '';
+  const active = projects.filter(p => p.status !== '완료');
+  if (!active.length && projects.length === 0) {
+    el.innerHTML = '<div class="empty">진행 중인 프로젝트 없음</div>';
+    return;
+  }
+  active.forEach(pj => {
+    const d = document.createElement('div');
+    d.className = 'pji';
+    d.innerHTML = `
+      <div class="pji-head">
+        <span class="pji-name">${pj.name}</span>
+        <div class="pji-right">
+          ${statusLabel(pj.status)}
+          <button class="xbtn" onclick="delPj('${pj.pageId}', event)">✕</button>
+        </div>
+      </div>
+      <div class="pji-bar-wrap" id="bar-${pj.pageId}">
+        <div class="pji-fill" style="width:${pj.pct}%"></div>
+      </div>
+      <div class="pji-foot">
+        <input class="pji-pct" value="${pj.pct}%"
+          onfocus="this.value='${pj.pct}'"
+          onblur="setPct('${pj.pageId}', this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()">
+        <div class="pji-tags">${(pj.tags||[]).map(t=>`<span class="pji-tag">${t}</span>`).join('')}</div>
+      </div>
+    `;
+    el.appendChild(d);
+    document.getElementById(`bar-${pj.pageId}`).addEventListener('click', function(e) {
+      const r = this.getBoundingClientRect();
+      setPct(pj.pageId, Math.round((e.clientX - r.left) / r.width * 100));
+    });
+  });
+  // 3개 미만 더미
+  const ghostCount = MIN_SLOTS - active.length;
+  for (let i = 0; i < ghostCount; i++) {
+    const g = document.createElement('div');
+    g.className = 'pji pji-ghost';
+    el.appendChild(g);
+  }
+}
+
+async function loadFromNotion() {
+  try {
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { property: 'Status', select: { does_not_equal: '완료' } },
+        sorts: [{ timestamp: 'created_time', direction: 'descending' }]
+      })
+    });
+    const data = await res.json();
+    projects = data.results.map(p => ({
+      pageId: p.id,
+      name: p.properties.Project.title[0]?.plain_text || '',
+      pct: p.properties.Progress?.number || 0,
+      status: p.properties.Status?.select?.name || '진행중',
+      tags: (p.properties.Tag?.multi_select || []).map(t => t.name)
+    }));
+    renderPj();
+  } catch(e) {
+    showToast('로드 실패');
+  }
+}
+
+async function setPct(pageId, val) {
+  const pj = projects.find(p => p.pageId === pageId);
+  if (!pj) return;
+  pj.pct = Math.min(100, Math.max(0, parseInt(val) || 0));
+  renderPj();
+  try {
+    await fetch(`${PROXY}?path=pages/${pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        properties: { Progress: { number: pj.pct } }
+      })
+    });
+  } catch(e) { showToast('저장 실패'); }
+}
+
+async function addPj() {
+  const name = document.getElementById('pj-inp').value.trim();
+  if (!name) return;
+  document.getElementById('pj-inp').value = '';
+  try {
+    const res = await fetch(`${PROXY}?path=pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parent: { database_id: DB_ID },
+        properties: {
+          Project: { title: [{ text: { content: name } }] },
+          Progress: { number: 0 },
+          Status: { select: { name: '진행중' } }
+        }
+      })
+    });
+    const page = await res.json();
+    projects.unshift({ pageId: page.id, name, pct: 0, status: '진행중', tags: [] });
+    renderPj();
+  } catch(e) { showToast('추가 실패'); }
+}
+
+async function delPj(pageId, e) {
+  e.stopPropagation();
+  try {
+    await fetch(`${PROXY}?path=pages/${pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived: true })
+    });
+    projects = projects.filter(p => p.pageId !== pageId);
+    renderPj();
+  } catch(e) { showToast('삭제 실패'); }
+}
+
+loadFromNotion();
+</script>
+</body>
+</html>
