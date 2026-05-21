@@ -47,17 +47,11 @@ html, body {
   margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0;
 }
 .wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
-.wlabel-r { margin-left: auto; }
-.wlbtn {
-  font-size: 9px; color: var(--tx3); background: none; border: none;
-  font-family: var(--font); cursor: pointer; letter-spacing: 0.08em;
-  transition: color 0.15s; padding: 0;
-}
-.wlbtn:hover { color: var(--tx2); }
-.ilist { display: flex; flex-direction: column; gap: 6px; height: 234px; min-height: 234px; overflow-y: auto; flex-shrink: 0; }
+/* 루틴과 동일: 6개 기준 높이 (42px * 6 + 6px * 5 = 282px) */
+.ilist { display: flex; flex-direction: column; gap: 6px; height: 282px; min-height: 282px; overflow-y: auto; flex-shrink: 0; }
 .ii {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; min-height: 42px;
+  padding: 10px 12px; height: 42px;
   background: var(--s2); border: 1px solid var(--b1);
   border-radius: 8px; cursor: pointer; user-select: none;
   transition: border-color 0.12s; flex-shrink: 0;
@@ -65,6 +59,7 @@ html, body {
 .ii:hover { border-color: var(--b2); }
 .ii:hover .xbtn { opacity: 1; }
 .ii.done { opacity: 0.35; }
+.ii.ghost { opacity: 0; pointer-events: none; }
 .iprio { width: 3px; height: 18px; border-radius: 2px; flex-shrink: 0; }
 .ph { background: var(--red); }
 .pm { background: var(--yel); }
@@ -115,7 +110,6 @@ html, body {
   cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
 }
 .abtn:hover { background: var(--b1); }
-.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
 .toast {
   position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
   background: var(--b2); color: var(--tx); font-size: 11px;
@@ -129,7 +123,6 @@ html, body {
 <div class="w">
   <div class="wlabel">
     <span class="wdot"></span>Tasks
-
   </div>
   <div class="ilist" id="t-list"></div>
   <div class="add-row">
@@ -139,24 +132,17 @@ html, body {
       <option value="중간" selected>🟧 Mid</option>
       <option value="낮음">🟦 Low</option>
     </select>
-    <select class="asel" id="t-tag">
-      <option>Unity</option>
-      <option>UI</option>
-      <option>클라이언트</option>
-      <option>기획</option>
-      <option>버그</option>
-      <option>공부</option>
-      <option value="">—</option>
-    </select>
-    <button class="abtn" style="background:var(--s2);border-color:var(--b2);color:var(--tx3);" onclick="clearDone()">정리</button>
+    <select class="asel" id="t-tag"></select>
     <button class="abtn" onclick="addT()">추가</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-const PROXY = 'https://notion-phi-six.vercel.app/api/notion';
-const DB_ID = 'e7f1b0f0e0c345ec85f2224abe15d617';
+const PROXY   = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID   = 'e7f1b0f0e0c345ec85f2224abe15d617';
+const DATE_KEY = 'devflow_tasks_date';
+const MIN_SLOTS = 6;
 
 let tasks = [];
 
@@ -167,13 +153,13 @@ function showToast(msg) {
   setTimeout(() => el.classList.remove('show'), 2000);
 }
 
+function toDateStr(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
 function prioClass(p) {
   if (p === '높음') return 'ph';
   if (p === '중간') return 'pm';
   return 'pl';
 }
-
-const MIN_SLOTS = 5;
 
 function renderT() {
   const el = document.getElementById('t-list');
@@ -193,15 +179,26 @@ function renderT() {
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleT(t); };
     el.appendChild(d);
   });
-  // 5개 미만이면 투명 더미
+  // 6개 미만이면 투명 더미
   const ghostCount = MIN_SLOTS - tasks.length;
   for (let i = 0; i < ghostCount; i++) {
     const g = document.createElement('div');
-    g.className = 'ii';
-    g.style.cssText = 'opacity:0; pointer-events:none;';
+    g.className = 'ii ghost';
     g.innerHTML = '<div class="iprio"></div><div class="ichk"></div><span class="itext">·</span>';
     el.appendChild(g);
   }
+}
+
+// DB 스키마에서 태그 옵션 동적 로드
+async function loadTagOptions() {
+  try {
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+    const data = await res.json();
+    const options = data.properties?.Tag?.multi_select?.options || [];
+    const sel = document.getElementById('t-tag');
+    sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    sel.innerHTML += '<option value="">—</option>';
+  } catch(e) {}
 }
 
 async function loadFromNotion() {
@@ -209,7 +206,10 @@ async function loadFromNotion() {
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sorts: [{ timestamp: 'created_time', direction: 'descending' }] })
+      body: JSON.stringify({
+        filter: { property: 'Status', select: { does_not_equal: 'Done' } },
+        sorts: [{ timestamp: 'created_time', direction: 'descending' }]
+      })
     });
     const data = await res.json();
     tasks = data.results.map(p => ({
@@ -228,12 +228,17 @@ async function loadFromNotion() {
 async function toggleT(t) {
   t.done = !t.done;
   renderT();
+  const now = new Date().toISOString();
   try {
     await fetch(`${PROXY}?path=pages/${t.pageId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        properties: { Status: { select: { name: t.done ? 'Done' : 'Todo' } } }
+        properties: {
+          Status: { select: { name: t.done ? 'Done' : 'Todo' } },
+          // 체크 시 Due Date에 완료 시간 기록
+          ...(t.done ? { 'Due Date': { date: { start: now } } } : { 'Due Date': { date: null } })
+        }
       })
     });
   } catch(e) { showToast('저장 실패'); }
@@ -278,21 +283,40 @@ async function delT(pageId, e) {
   } catch(e) { showToast('삭제 실패'); }
 }
 
-async function clearDone() {
-  const doneTasks = tasks.filter(t => t.done);
-  for (const t of doneTasks) {
-    await fetch(`${PROXY}?path=pages/${t.pageId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ archived: true })
-    });
+// 자정 초기화: Done → archived, Todo → 이월 유지
+async function checkDayReset() {
+  const today = toDateStr(new Date());
+  const last  = localStorage.getItem(DATE_KEY);
+  if (last && last !== today) {
+    const doneTasks = tasks.filter(t => t.done);
+    for (const t of doneTasks) {
+      await fetch(`${PROXY}?path=pages/${t.pageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: true })
+      });
+    }
+    tasks = tasks.filter(t => !t.done);
+    renderT();
   }
-  tasks = tasks.filter(t => !t.done);
-  renderT();
-  showToast(`완료 ${doneTasks.length}개 정리됨`);
+  localStorage.setItem(DATE_KEY, today);
 }
 
-loadFromNotion();
+async function init() {
+  await loadTagOptions();
+  await loadFromNotion();
+  await checkDayReset();
+}
+
+init();
+
+// 자정 체크 (1분마다)
+setInterval(async () => {
+  const today = toDateStr(new Date());
+  if (localStorage.getItem(DATE_KEY) !== today) {
+    await checkDayReset();
+  }
+}, 60000);
 </script>
 </body>
 </html>
