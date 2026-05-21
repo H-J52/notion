@@ -223,12 +223,17 @@ async function setPct(pageId, val) {
   pj.pct = Math.min(100, Math.max(0, parseInt(val) || 0));
   renderPj();
   try {
+    const props = { Progress: { number: pj.pct } };
+    if (pj.pct >= 100) {
+      props.Status = { select: { name: '완료' } };
+      pj.status = '완료';
+      showToast('🎉 완료!');
+      setTimeout(() => renderPj(), 600);
+    }
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        properties: { Progress: { number: pj.pct } }
-      })
+      body: JSON.stringify({ properties: props })
     });
   } catch(e) { showToast('저장 실패'); }
 }
