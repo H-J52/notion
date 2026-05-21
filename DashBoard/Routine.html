@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Routine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #0d0d0e;
+  --s1:    #141415;
+  --s2:    #1a1a1c;
+  --b1:    #232326;
+  --b2:    #2e2e32;
+  --b3:    #3a3a3f;
+  --tx:    #e5e5e9;
+  --tx2:   #7c7c88;
+  --tx3:   #404048;
+  --green: #6effa0;
+  --red:   #ff6060;
+  --font:  'DM Mono', monospace;
+}
+html, body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font);
+  font-size: 13px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+
+.w {
+  background: var(--s1);
+  border: 1px solid var(--b2);
+  border-radius: 0;
+  padding: 20px 22px;
+}
+.wlabel {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--tx3); display: flex; align-items: center; gap: 6px;
+  margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif;
+}
+.wdot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
+.wlabel-r { margin-left: auto; display: flex; gap: 8px; }
+.wlbtn {
+  font-size: 9px; color: var(--tx3); background: none; border: none;
+  font-family: var(--font); cursor: pointer; letter-spacing: 0.08em;
+  transition: color 0.15s; padding: 0;
+}
+.wlbtn:hover { color: var(--tx2); }
+
+/* PROGRESS */
+.prow { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.plbl { font-size: 10px; color: var(--tx3); }
+.pval { font-size: 10px; color: var(--green); }
+.ptrack { height: 2px; background: var(--b1); border-radius: 1px; overflow: hidden; margin-bottom: 14px; }
+.pfill { height: 100%; border-radius: 1px; background: var(--green); transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+
+/* LIST */
+.ilist { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.ii {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; min-height: 42px;
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; cursor: pointer; user-select: none;
+  transition: border-color 0.12s;
+}
+.ii:hover { border-color: var(--b2); }
+.ii:hover .xbtn { opacity: 1; }
+.ii.done { opacity: 0.35; }
+.ichk {
+  width: 15px; height: 15px; border: 1.5px solid var(--b3);
+  border-radius: 4px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.ii.done .ichk { background: var(--green); border-color: var(--green); }
+.ii.done .ichk::after {
+  content: ''; width: 7px; height: 4px;
+  border-left: 1.5px solid #0d0d0e; border-bottom: 1.5px solid #0d0d0e;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.itext { font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ii.done .itext { text-decoration: line-through; color: var(--tx3); }
+.xbtn {
+  font-size: 10px; color: var(--tx3); background: none; border: none;
+  cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s;
+  font-family: var(--font); padding: 0 2px; flex-shrink: 0; line-height: 1;
+}
+.xbtn:hover { color: var(--red); }
+
+/* ADD ROW */
+.add-row { display: flex; gap: 6px; margin-top: 10px; }
+.ainput {
+  flex: 1; background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 7px; padding: 8px 11px;
+  font-size: 11px; color: var(--tx); font-family: var(--font);
+  outline: none; transition: border-color 0.15s;
+}
+.ainput:focus { border-color: var(--b3); }
+.ainput::placeholder { color: var(--tx3); }
+.abtn {
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 7px; padding: 8px 14px;
+  font-size: 11px; color: var(--green); font-family: var(--font);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.abtn:hover { background: var(--b1); }
+.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="wlabel">
+    <span class="wdot"></span>Daily Routine
+    <span class="wlabel-r">
+      <button class="wlbtn" onclick="resetRoutine()">초기화</button>
+    </span>
+  </div>
+  <div class="prow">
+    <span class="plbl">달성률</span>
+    <span class="pval" id="r-pct">0%</span>
+  </div>
+  <div class="ptrack"><div class="pfill" id="r-bar" style="width:0%"></div></div>
+  <div class="ilist" id="r-list"></div>
+  <div class="add-row">
+    <input class="ainput" id="r-inp" placeholder="+ 루틴 추가... (이모지 직접 입력 가능)" onkeydown="if(event.key==='Enter')addR()">
+    <button class="abtn" onclick="addR()">추가</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'devflow_routine';
+const DATE_KEY    = 'devflow_routine_date';
+
+let S = {
+  routines: [
+    {id:1, t:'🌅 침대 정리',  done:false},
+    {id:2, t:'💧 물 마시기',  done:false},
+    {id:3, t:'🧠 25분 집중', done:false},
+    {id:4, t:'💪 가볍게 운동',done:false},
+    {id:5, t:'📖 독서 20분', done:false},
+    {id:6, t:'🌙 오늘 회고', done:false},
+  ],
+  seed: 7
+};
+
+function toDateStr(d){ return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+function rpct(){
+  const done = S.routines.filter(r=>r.done).length;
+  const total = S.routines.length;
+  return total ? Math.round(done/total*100) : 0;
+}
+
+function renderR(){
+  const pct = rpct();
+  document.getElementById('r-pct').textContent = pct + '%';
+  document.getElementById('r-bar').style.width = pct + '%';
+  const el = document.getElementById('r-list');
+  el.innerHTML = '';
+  if(!S.routines.length){ el.innerHTML='<div class="empty">루틴 없음</div>'; return; }
+  S.routines.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'ii' + (r.done ? ' done' : '');
+    d.innerHTML = `<div class="ichk"></div><span class="itext">${r.t}</span><button class="xbtn" onclick="delR(${r.id},event)">✕</button>`;
+    d.onclick = e => { if(e.target.classList.contains('xbtn')) return; r.done = !r.done; renderR(); saveState(); };
+    el.appendChild(d);
+  });
+  saveState();
+}
+
+function addR(){
+  const t = document.getElementById('r-inp').value.trim();
+  if(!t) return;
+  S.routines.push({id: S.seed++, t, done: false});
+  document.getElementById('r-inp').value = '';
+  renderR();
+}
+
+function delR(id, e){
+  e.stopPropagation();
+  S.routines = S.routines.filter(r => r.id !== id);
+  renderR();
+}
+
+function resetRoutine(){
+  S.routines.forEach(r => r.done = false);
+  renderR();
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+}
+
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try{ S = JSON.parse(raw); }catch(e){} }
+}
+
+function checkDayReset(){
+  const today   = toDateStr(new Date());
+  const lastDate = localStorage.getItem(DATE_KEY);
+  if(lastDate && lastDate !== today){
+    S.routines.forEach(r => r.done = false);
+    saveState();
+  }
+  localStorage.setItem(DATE_KEY, today);
+}
+
+loadState();
+checkDayReset();
+renderR();
+
+// 자정 체크 (1분마다)
+setInterval(() => {
+  const today    = toDateStr(new Date());
+  const lastDate = localStorage.getItem(DATE_KEY);
+  if(lastDate !== today){ checkDayReset(); renderR(); }
+}, 60000);
+</script>
+</body>
+</html>
