@@ -54,7 +54,7 @@ html, body {
   transition: color 0.15s; padding: 0;
 }
 .wlbtn:hover { color: var(--tx2); }
-.ilist { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; flex-shrink: 0; }
+.ilist { display: flex; flex-direction: column; gap: 6px; height: 234px; min-height: 234px; overflow-y: auto; flex-shrink: 0; }
 .ii {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; min-height: 42px;
@@ -129,9 +129,7 @@ html, body {
 <div class="w">
   <div class="wlabel">
     <span class="wdot"></span>Tasks
-    <span class="wlabel-r">
-      <button class="wlbtn" onclick="clearDone()">완료 정리</button>
-    </span>
+
   </div>
   <div class="ilist" id="t-list"></div>
   <div class="add-row">
@@ -150,6 +148,7 @@ html, body {
       <option>공부</option>
       <option value="">—</option>
     </select>
+    <button class="abtn" style="background:var(--s2);border-color:var(--b2);color:var(--tx3);" onclick="clearDone()">정리</button>
     <button class="abtn" onclick="addT()">추가</button>
   </div>
 </div>
@@ -174,10 +173,11 @@ function prioClass(p) {
   return 'pl';
 }
 
+const MIN_SLOTS = 5;
+
 function renderT() {
   const el = document.getElementById('t-list');
   el.innerHTML = '';
-  if (!tasks.length) { el.innerHTML = '<div class="empty">태스크 없음 🎉</div>'; return; }
   const active = tasks.filter(t => !t.done);
   const done   = tasks.filter(t => t.done);
   [...active, ...done].forEach(t => {
@@ -193,6 +193,15 @@ function renderT() {
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleT(t); };
     el.appendChild(d);
   });
+  // 5개 미만이면 투명 더미
+  const ghostCount = MIN_SLOTS - tasks.length;
+  for (let i = 0; i < ghostCount; i++) {
+    const g = document.createElement('div');
+    g.className = 'ii';
+    g.style.cssText = 'opacity:0; pointer-events:none;';
+    g.innerHTML = '<div class="iprio"></div><div class="ichk"></div><span class="itext">·</span>';
+    el.appendChild(g);
+  }
 }
 
 async function loadFromNotion() {
