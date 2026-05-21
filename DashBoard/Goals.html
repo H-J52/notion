@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goals</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #0d0d0e;
+  --s1:    #141415;
+  --s2:    #1a1a1c;
+  --b1:    #232326;
+  --b2:    #2e2e32;
+  --b3:    #3a3a3f;
+  --tx:    #e5e5e9;
+  --tx2:   #7c7c88;
+  --tx3:   #404048;
+  --green: #6effa0;
+  --red:   #ff6060;
+  --pur:   #b48aff;
+  --font:  'DM Mono', monospace;
+}
+html, body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font);
+  font-size: 13px;
+  margin: 0; padding: 0;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+.w {
+  background: var(--s1);
+  border: 1px solid var(--b2);
+  border-radius: 0;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+}
+.wlabel {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--tx3); display: flex; align-items: center; gap: 6px;
+  margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0;
+}
+.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--pur); flex-shrink: 0; }
+.ilist { display: flex; flex-direction: column; gap: 6px; height: 282px; min-height: 282px; overflow-y: auto; flex-shrink: 0; }
+.ii {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; height: 42px;
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; cursor: pointer; user-select: none;
+  transition: border-color 0.12s; flex-shrink: 0;
+}
+.ii:hover { border-color: var(--b2); }
+.ii:hover .xbtn { opacity: 1; }
+.ii.done { opacity: 0.35; }
+.ii.ghost { opacity: 0; pointer-events: none; }
+.ichk {
+  width: 15px; height: 15px; border: 1.5px solid var(--b3);
+  border-radius: 4px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.ii.done .ichk { background: var(--pur); border-color: var(--pur); }
+.ii.done .ichk::after {
+  content: ''; width: 7px; height: 4px;
+  border-left: 1.5px solid #0d0d0e; border-bottom: 1.5px solid #0d0d0e;
+  transform: rotate(-45deg) translateY(-1px);
+}
+.itext { font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ii.done .itext { text-decoration: line-through; color: var(--tx3); }
+.itag {
+  font-size: 9px; color: var(--tx3); background: var(--b1);
+  border-radius: 4px; padding: 2px 6px; flex-shrink: 0; white-space: nowrap;
+}
+.xbtn {
+  font-size: 10px; color: var(--tx3); background: none; border: none;
+  cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s;
+  font-family: var(--font); padding: 0 2px; flex-shrink: 0;
+}
+.xbtn:hover { color: var(--red); }
+.add-row { display: flex; gap: 6px; margin-top: 10px; flex-shrink: 0; }
+.ainput {
+  flex: 1; background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 7px; padding: 8px 11px;
+  font-size: 11px; color: var(--tx); font-family: var(--font);
+  outline: none; transition: border-color 0.15s; min-width: 0;
+}
+.ainput:focus { border-color: var(--b3); }
+.ainput::placeholder { color: var(--tx3); }
+.asel {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 7px; padding: 8px;
+  font-size: 11px; color: var(--tx2); font-family: var(--font);
+  outline: none; cursor: pointer; flex-shrink: 0;
+}
+.abtn {
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: 7px; padding: 8px 14px;
+  font-size: 11px; color: var(--pur); font-family: var(--font);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.abtn:hover { background: var(--b1); }
+.toast {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--b2); color: var(--tx); font-size: 11px;
+  padding: 8px 16px; border-radius: 8px; pointer-events: none;
+  opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="wlabel">
+    <span class="wdot"></span>Weekly Goals
+  </div>
+  <div class="ilist" id="g-list"></div>
+  <div class="add-row">
+    <input class="ainput" id="g-inp" placeholder="+ 목표 추가..." onkeydown="if(event.key==='Enter')addG()">
+    <select class="asel" id="g-tag"></select>
+    <button class="abtn" onclick="addG()">추가</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID    = 'dde3b94ed40e4bf6876f539dd46d4c2e';
+const DATE_KEY = 'devflow_goals_date';
+const MIN_SLOTS = 6;
+
+let goals = [];
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function toDateStr(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+function getMondayStr() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const mon = new Date(d.setDate(diff));
+  return toDateStr(mon);
+}
+
+function renderG() {
+  const el = document.getElementById('g-list');
+  el.innerHTML = '';
+  const active = goals.filter(g => !g.done);
+  const done   = goals.filter(g => g.done);
+  [...active, ...done].forEach(g => {
+    const d = document.createElement('div');
+    d.className = 'ii' + (g.done ? ' done' : '');
+    d.innerHTML = `
+      <div class="ichk"></div>
+      <span class="itext">${g.t}</span>
+      ${g.tag ? `<span class="itag">${g.tag}</span>` : ''}
+      <button class="xbtn" onclick="delG('${g.pageId}', event)">✕</button>
+    `;
+    d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleG(g); };
+    el.appendChild(d);
+  });
+  const ghostCount = MIN_SLOTS - goals.length;
+  for (let i = 0; i < ghostCount; i++) {
+    const g = document.createElement('div');
+    g.className = 'ii ghost';
+    g.innerHTML = '<div class="ichk"></div><span class="itext">·</span>';
+    el.appendChild(g);
+  }
+}
+
+async function loadTagOptions() {
+  try {
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+    const data = await res.json();
+    const options = data.properties?.Tag?.multi_select?.options || [];
+    const sel = document.getElementById('g-tag');
+    sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    sel.innerHTML += '<option value="">—</option>';
+  } catch(e) {}
+}
+
+async function loadFromNotion() {
+  try {
+    const monday = getMondayStr();
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { property: 'Week', rich_text: { equals: monday } },
+        sorts: [{ timestamp: 'created_time', direction: 'ascending' }]
+      })
+    });
+    const data = await res.json();
+    goals = data.results.map(p => ({
+      pageId: p.id,
+      t: p.properties.Goal.title[0]?.plain_text || '',
+      tag: p.properties.Tag?.multi_select?.[0]?.name || '',
+      done: p.properties.Status?.select?.name === 'Done'
+    }));
+    renderG();
+  } catch(e) {
+    showToast('로드 실패');
+  }
+}
+
+async function toggleG(g) {
+  g.done = !g.done;
+  renderG();
+  try {
+    await fetch(`${PROXY}?path=pages/${g.pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        properties: { Status: { select: { name: g.done ? 'Done' : 'Todo' } } }
+      })
+    });
+  } catch(e) { showToast('저장 실패'); }
+}
+
+async function addG() {
+  const t = document.getElementById('g-inp').value.trim();
+  if (!t) return;
+  const tag = document.getElementById('g-tag').value;
+  document.getElementById('g-inp').value = '';
+  const monday = getMondayStr();
+  try {
+    const res = await fetch(`${PROXY}?path=pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parent: { database_id: DB_ID },
+        properties: {
+          Goal: { title: [{ text: { content: t } }] },
+          Status: { select: { name: 'Todo' } },
+          Tag: tag ? { multi_select: [{ name: tag }] } : { multi_select: [] },
+          Week: { rich_text: [{ text: { content: monday } }] }
+        }
+      })
+    });
+    const page = await res.json();
+    goals.push({ pageId: page.id, t, tag, done: false });
+    renderG();
+  } catch(e) { showToast('추가 실패'); }
+}
+
+async function delG(pageId, e) {
+  e.stopPropagation();
+  try {
+    await fetch(`${PROXY}?path=pages/${pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived: true })
+    });
+    goals = goals.filter(g => g.pageId !== pageId);
+    renderG();
+  } catch(e) { showToast('삭제 실패'); }
+}
+
+// 매주 월요일 초기화 체크
+function checkWeekReset() {
+  const monday = getMondayStr();
+  const last   = localStorage.getItem(DATE_KEY);
+  if (last !== monday) {
+    localStorage.setItem(DATE_KEY, monday);
+    loadFromNotion(); // 새 주 목표 로드 (빈 상태)
+  }
+}
+
+async function init() {
+  await loadTagOptions();
+  await loadFromNotion();
+  checkWeekReset();
+}
+
+init();
+
+setInterval(() => {
+  const monday = getMondayStr();
+  if (localStorage.getItem(DATE_KEY) !== monday) checkWeekReset();
+}, 60000);
+</script>
+</body>
+</html>
