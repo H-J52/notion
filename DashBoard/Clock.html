@@ -10,7 +10,6 @@
 :root {
   --bg:    #0d0d0e;
   --s1:    #141415;
-  --b1:    #232326;
   --b2:    #2e2e32;
   --tx:    #e5e5e9;
   --tx3:   #404048;
@@ -24,17 +23,17 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  height: 100%;
 }
 .w-clock {
   background: var(--s1);
-  border: 1px solid var(--b1);
-  border-radius: 12px;
+  border: 1px solid var(--b2);
+  border-radius: 0;
   padding: 20px 28px;
   display: flex;
   align-items: center;
-  transition: border-color 0.2s;
+  height: 100%;
 }
-.w-clock:hover { border-color: var(--b2); }
 .clock-time {
   font-family: 'Black Han Sans', sans-serif;
   font-size: 52px;
@@ -55,9 +54,7 @@ html, body {
 <body>
 <div class="w-clock">
   <div>
-    <div class="clock-time" id="ctime">
-      00<span class="clock-colon">:</span>00<span class="clock-colon">:</span>00
-    </div>
+    <div class="clock-time" id="ctime">00<span class="clock-colon">:</span>00<span class="clock-colon">:</span>00</div>
     <div class="clock-date" id="cdate"></div>
   </div>
 </div>
