@@ -47,8 +47,7 @@ html, body {
   margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0;
 }
 .wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
-/* 루틴과 동일: 6개 기준 높이 (42px * 6 + 6px * 5 = 282px) */
-.ilist { display: flex; flex-direction: column; gap: 6px; height: 312px; min-height: 312px; overflow-y: auto; flex-shrink: 0; }
+.ilist { display: flex; flex-direction: column; gap: 6px; height: 320px; min-height: 320px; overflow-y: auto; flex-shrink: 0; }
 .ii {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; height: 42px;
@@ -81,6 +80,10 @@ html, body {
 .itag {
   font-size: 9px; color: var(--tx3); background: var(--b1);
   border-radius: 4px; padding: 2px 6px; flex-shrink: 0; white-space: nowrap;
+}
+.idate {
+  font-size: 9px; color: var(--tx3);
+  flex-shrink: 0; white-space: nowrap;
 }
 .xbtn {
   font-size: 10px; color: var(--tx3); background: none; border: none;
@@ -139,8 +142,8 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
-const PROXY   = 'https://notion-phi-six.vercel.app/api/notion';
-const DB_ID   = 'e7f1b0f0e0c345ec85f2224abe15d617';
+const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID    = 'e7f1b0f0e0c345ec85f2224abe15d617';
 const DATE_KEY = 'devflow_tasks_date';
 const MIN_SLOTS = 6;
 
@@ -154,6 +157,17 @@ function showToast(msg) {
 }
 
 function toDateStr(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+function isToday(isoStr) {
+  if (!isoStr) return false;
+  return toDateStr(new Date(isoStr)) === toDateStr(new Date());
+}
+
+function formatDate(isoStr) {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
 
 function prioClass(p) {
   if (p === '높음') return 'ph';
@@ -169,11 +183,13 @@ function renderT() {
   [...active, ...done].forEach(t => {
     const d = document.createElement('div');
     d.className = 'ii' + (t.done ? ' done' : '');
+    const isCarried = !isToday(t.createdAt);
     d.innerHTML = `
       <div class="iprio ${prioClass(t.p)}"></div>
       <div class="ichk"></div>
       <span class="itext">${t.t}</span>
       ${t.tag ? `<span class="itag">${t.tag}</span>` : ''}
+      ${isCarried && !t.done ? `<span class="idate">${formatDate(t.createdAt)}</span>` : ''}
       <button class="xbtn" onclick="delT('${t.pageId}', event)">✕</button>
     `;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleT(t); };
@@ -189,7 +205,6 @@ function renderT() {
   }
 }
 
-// DB 스키마에서 태그 옵션 동적 로드
 async function loadTagOptions() {
   try {
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
@@ -203,11 +218,25 @@ async function loadTagOptions() {
 
 async function loadFromNotion() {
   try {
+    // 오늘 생성된 것 (Done 포함) + 이전에 생성된 Todo (이월)
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        filter: { property: 'Status', select: { does_not_equal: 'Done' } },
+        filter: {
+          or: [
+            // 오늘 생성된 건 Done 포함 모두 표시
+            { property: 'Created', created_time: { on_or_after: todayStart.toISOString() } },
+            // 이전 생성된 Todo만 이월
+            { and: [
+              { property: 'Status', select: { does_not_equal: 'Done' } },
+              { property: 'Created', created_time: { before: todayStart.toISOString() } }
+            ]}
+          ]
+        },
         sorts: [{ timestamp: 'created_time', direction: 'descending' }]
       })
     });
@@ -217,7 +246,8 @@ async function loadFromNotion() {
       t: p.properties.Task.title[0]?.plain_text || '',
       p: p.properties.Priority?.select?.name || '중간',
       tag: p.properties.Tag?.multi_select?.[0]?.name || '',
-      done: p.properties.Status?.select?.name === 'Done'
+      done: p.properties.Status?.select?.name === 'Done',
+      createdAt: p.created_time
     }));
     renderT();
   } catch(e) {
@@ -236,7 +266,6 @@ async function toggleT(t) {
       body: JSON.stringify({
         properties: {
           Status: { select: { name: t.done ? 'Done' : 'Todo' } },
-          // 체크 시 Due Date에 완료 시간 기록
           ...(t.done ? { 'Completed At': { date: { start: now } } } : { 'Completed At': { date: null } })
         }
       })
@@ -265,7 +294,7 @@ async function addT() {
       })
     });
     const page = await res.json();
-    tasks.unshift({ pageId: page.id, t, p, tag, done: false });
+    tasks.unshift({ pageId: page.id, t, p, tag, done: false, createdAt: new Date().toISOString() });
     renderT();
   } catch(e) { showToast('추가 실패'); }
 }
@@ -283,7 +312,7 @@ async function delT(pageId, e) {
   } catch(e) { showToast('삭제 실패'); }
 }
 
-// 자정 초기화: Done → archived, Todo → 이월 유지
+// 자정 초기화: 오늘 생성 Done → archived, Todo → 이월 유지
 async function checkDayReset() {
   const today = toDateStr(new Date());
   const last  = localStorage.getItem(DATE_KEY);
@@ -296,8 +325,7 @@ async function checkDayReset() {
         body: JSON.stringify({ archived: true })
       });
     }
-    tasks = tasks.filter(t => !t.done);
-    renderT();
+    await loadFromNotion();
   }
   localStorage.setItem(DATE_KEY, today);
 }
@@ -310,7 +338,6 @@ async function init() {
 
 init();
 
-// 자정 체크 (1분마다)
 setInterval(async () => {
   const today = toDateStr(new Date());
   if (localStorage.getItem(DATE_KEY) !== today) {
