@@ -26,48 +26,49 @@ html, body {
   color: var(--tx);
   font-family: var(--font);
   font-size: 13px;
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
+  /* 고정 높이: 6개 아이템 기준 */
+  width: 100%;
+  height: 420px;
   overflow: hidden;
 }
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
-
 .w {
   background: var(--s1);
   border: 1px solid var(--b2);
   border-radius: 0;
   padding: 20px 22px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .wlabel {
   font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--tx3); display: flex; align-items: center; gap: 6px;
   margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif;
+  flex-shrink: 0;
 }
-.wdot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
-.wlabel-r { margin-left: auto; display: flex; gap: 8px; }
+.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.wlabel-r { margin-left: auto; }
 .wlbtn {
   font-size: 9px; color: var(--tx3); background: none; border: none;
   font-family: var(--font); cursor: pointer; letter-spacing: 0.08em;
   transition: color 0.15s; padding: 0;
 }
 .wlbtn:hover { color: var(--tx2); }
-
-/* PROGRESS */
-.prow { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.prow { display: flex; justify-content: space-between; margin-bottom: 5px; flex-shrink: 0; }
 .plbl { font-size: 10px; color: var(--tx3); }
 .pval { font-size: 10px; color: var(--green); }
-.ptrack { height: 2px; background: var(--b1); border-radius: 1px; overflow: hidden; margin-bottom: 14px; }
+.ptrack { height: 2px; background: var(--b1); border-radius: 1px; overflow: hidden; margin-bottom: 14px; flex-shrink: 0; }
 .pfill { height: 100%; border-radius: 1px; background: var(--green); transition: width 0.4s cubic-bezier(.4,0,.2,1); }
-
-/* LIST */
-.ilist { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.ilist { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
 .ii {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; min-height: 42px;
   background: var(--s2); border: 1px solid var(--b1);
   border-radius: 8px; cursor: pointer; user-select: none;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s; flex-shrink: 0;
 }
 .ii:hover { border-color: var(--b2); }
 .ii:hover .xbtn { opacity: 1; }
@@ -89,12 +90,10 @@ html, body {
 .xbtn {
   font-size: 10px; color: var(--tx3); background: none; border: none;
   cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s;
-  font-family: var(--font); padding: 0 2px; flex-shrink: 0; line-height: 1;
+  font-family: var(--font); padding: 0 2px; flex-shrink: 0;
 }
 .xbtn:hover { color: var(--red); }
-
-/* ADD ROW */
-.add-row { display: flex; gap: 6px; margin-top: 10px; }
+.add-row { display: flex; gap: 6px; margin-top: 10px; flex-shrink: 0; }
 .ainput {
   flex: 1; background: var(--s2); border: 1px solid var(--b1);
   border-radius: 7px; padding: 8px 11px;
@@ -107,7 +106,7 @@ html, body {
   background: var(--s2); border: 1px solid var(--b2);
   border-radius: 7px; padding: 8px 14px;
   font-size: 11px; color: var(--green); font-family: var(--font);
-  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
 }
 .abtn:hover { background: var(--b1); }
 .empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
@@ -128,15 +127,13 @@ html, body {
   <div class="ptrack"><div class="pfill" id="r-bar" style="width:0%"></div></div>
   <div class="ilist" id="r-list"></div>
   <div class="add-row">
-    <input class="ainput" id="r-inp" placeholder="+ 루틴 추가... (이모지 직접 입력 가능)" onkeydown="if(event.key==='Enter')addR()">
+    <input class="ainput" id="r-inp" placeholder="+ 루틴 추가..." onkeydown="if(event.key==='Enter')addR()">
     <button class="abtn" onclick="addR()">추가</button>
   </div>
 </div>
-
 <script>
 const STORAGE_KEY = 'devflow_routine';
 const DATE_KEY    = 'devflow_routine_date';
-
 let S = {
   routines: [
     {id:1, t:'🌅 침대 정리',  done:false},
@@ -148,15 +145,12 @@ let S = {
   ],
   seed: 7
 };
-
 function toDateStr(d){ return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
-
 function rpct(){
   const done = S.routines.filter(r=>r.done).length;
   const total = S.routines.length;
   return total ? Math.round(done/total*100) : 0;
 }
-
 function renderR(){
   const pct = rpct();
   document.getElementById('r-pct').textContent = pct + '%';
@@ -173,7 +167,6 @@ function renderR(){
   });
   saveState();
 }
-
 function addR(){
   const t = document.getElementById('r-inp').value.trim();
   if(!t) return;
@@ -181,46 +174,30 @@ function addR(){
   document.getElementById('r-inp').value = '';
   renderR();
 }
-
 function delR(id, e){
   e.stopPropagation();
   S.routines = S.routines.filter(r => r.id !== id);
   renderR();
 }
-
 function resetRoutine(){
   S.routines.forEach(r => r.done = false);
   renderR();
 }
-
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
-}
-
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }
 function loadState(){
   const raw = localStorage.getItem(STORAGE_KEY);
   if(raw){ try{ S = JSON.parse(raw); }catch(e){} }
 }
-
 function checkDayReset(){
-  const today   = toDateStr(new Date());
-  const lastDate = localStorage.getItem(DATE_KEY);
-  if(lastDate && lastDate !== today){
-    S.routines.forEach(r => r.done = false);
-    saveState();
-  }
+  const today = toDateStr(new Date());
+  const last  = localStorage.getItem(DATE_KEY);
+  if(last && last !== today){ S.routines.forEach(r => r.done = false); saveState(); }
   localStorage.setItem(DATE_KEY, today);
 }
-
-loadState();
-checkDayReset();
-renderR();
-
-// 자정 체크 (1분마다)
+loadState(); checkDayReset(); renderR();
 setInterval(() => {
-  const today    = toDateStr(new Date());
-  const lastDate = localStorage.getItem(DATE_KEY);
-  if(lastDate !== today){ checkDayReset(); renderR(); }
+  const today = toDateStr(new Date());
+  if(localStorage.getItem(DATE_KEY) !== today){ checkDayReset(); renderR(); }
 }, 60000);
 </script>
 </body>
