@@ -61,7 +61,7 @@ html, body {
 .wc:hover .xbtn { opacity: 1 !important; }
 .wc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
 .wc-cat { font-size: 11px; color: var(--tx2); }
-.wc-right { display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; }
+.wc-right { display: flex; align-items: center; gap: 7px; }
 .wbtn {
   width: 22px; height: 22px; border: 1px solid var(--b2); background: transparent;
   border-radius: 5px; color: var(--tx2); font-size: 15px; line-height: 1;
@@ -77,6 +77,8 @@ html, body {
 }
 .wc-num::-webkit-outer-spin-button,
 .wc-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#w-max::-webkit-outer-spin-button,
+#w-max::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .wc-num:focus { color: var(--green); border-bottom: 1px solid var(--b3); }
 .wc-max { font-size: 10px; color: var(--tx3); white-space: nowrap; }
 .xbtn {
@@ -117,7 +119,7 @@ html, body {
   <div class="w-list" id="w-list"></div>
   <div class="add-row">
     <input class="ainput" id="w-cat" placeholder="+ 카테고리..." onkeydown="if(event.key==='Enter')addW()">
-    <input class="ainput" id="w-max" value="10" type="number" style="flex:0 0 52px;text-align:center" placeholder="목표">
+    <input class="ainput" id="w-max" value="10" type="number" style="flex:0 0 52px;text-align:center;-moz-appearance:textfield;" placeholder="목표" class="no-arrow">
     <button class="abtn" onclick="addW()">추가</button>
   </div>
 </div>
