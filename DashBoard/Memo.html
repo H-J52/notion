@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -76,100 +75,95 @@ const DB_ID  = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 let memos = [];
 
 function showToast(msg) {
-const el = document.getElementById(‘toast’);
-el.textContent = msg;
-el.classList.add(‘show’);
-setTimeout(() => el.classList.remove(‘show’), 2000);
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
 }
 
 function renderM() {
-const el = document.getElementById(‘memo-list’);
-el.innerHTML = ‘’;
-if (!memos.length) { el.innerHTML = ‘<div class="empty">메모 없음</div>’; return; }
-memos.forEach(m => {
-const d = document.createElement(‘div’);
-d.className = ‘memo-item’;
-d.innerHTML = `<div class="memo-head"> <span class="memo-title">${m.title}</span> ${m.tag ?`<span class="memo-tag">${m.tag}</span>`: ''} <button class="xbtn" onclick="delMemo('${m.pageId}', event)">✕</button> </div> ${m.content ?`<div class="memo-content">${m.content}</div>`: ''}`;
-el.appendChild(d);
-});
-}
-
-async function loadTagOptions() {
-try {
-const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
-const data = await res.json();
-const options = data.properties?.Tag?.multi_select?.options || [];
-const sel = document.getElementById(‘m-tag’);
-sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join(’’);
-sel.innerHTML += ‘<option value="">—</option>’;
-} catch(e) {}
+  const el = document.getElementById('memo-list');
+  el.innerHTML = '';
+  if (!memos.length) { el.innerHTML = '<div class="empty">메모 없음</div>'; return; }
+  memos.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'memo-item';
+    d.innerHTML = `
+      <div class="memo-head">
+        <span class="memo-title">${m.title}</span>
+        ${m.tag ? `<span class="memo-tag">${m.tag}</span>` : ''}
+        <button class="xbtn" onclick="delMemo('${m.pageId}', event)">✕</button>
+      </div>
+      ${m.content ? `<div class="memo-content">${m.content}</div>` : ''}
+    `;
+    el.appendChild(d);
+  });
 }
 
 async function loadFromNotion() {
-try {
-const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
-method: ‘POST’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({
-filter: { property: ‘Type’, select: { equals: ‘Memo’ } },
-sorts: [{ timestamp: ‘created_time’, direction: ‘descending’ }]
-})
-});
-const data = await res.json();
-memos = data.results.map(p => ({
-pageId: p.id,
-title: p.properties.Title.title[0]?.plain_text || ‘’,
-content: p.properties.Content?.rich_text?.[0]?.plain_text || ‘’,
-tag: p.properties.Tag?.multi_select?.[0]?.name || ‘’
-}));
-renderM();
-} catch(e) { showToast(‘로드 실패’); }
+  try {
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { property: 'Type', select: { equals: 'Memo' } },
+        sorts: [{ timestamp: 'created_time', direction: 'descending' }]
+      })
+    });
+    const data = await res.json();
+    memos = data.results.map(p => ({
+      pageId: p.id,
+      title: p.properties.Title.title[0]?.plain_text || '',
+      content: p.properties.Content?.rich_text?.[0]?.plain_text || '',
+      tag: p.properties.Tag?.multi_select?.[0]?.name || ''
+    }));
+    renderM();
+  } catch(e) { showToast('로드 실패'); }
 }
 
 async function addMemo() {
-const title   = document.getElementById(‘m-title’).value.trim();
-const content = document.getElementById(‘m-content’).value.trim();
-if (!title) return;
-document.getElementById(‘m-title’).value = ‘’;
-document.getElementById(‘m-content’).value = ‘’;
-try {
-const res = await fetch(`${PROXY}?path=pages`, {
-method: ‘POST’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({
-parent: { database_id: DB_ID },
-properties: {
-Title: { title: [{ text: { content: title } }] },
-Content: { rich_text: [{ text: { content: content } }] },
-Type: { select: { name: ‘Memo’ } },
-Tag: { multi_select: [] }
-}
-})
-});
-const page = await res.json();
-memos.unshift({ pageId: page.id, title, content, tag: ‘’ });
-renderM();
-} catch(e) { showToast(‘추가 실패’); }
+  const title   = document.getElementById('m-title').value.trim();
+  const content = document.getElementById('m-content').value.trim();
+  if (!title) return;
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-content').value = '';
+  try {
+    const res = await fetch(`${PROXY}?path=pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parent: { database_id: DB_ID },
+        properties: {
+          Title: { title: [{ text: { content: title } }] },
+          Content: { rich_text: [{ text: { content: content } }] },
+          Type: { select: { name: 'Memo' } },
+          Tag: { multi_select: [] }
+        }
+      })
+    });
+    const page = await res.json();
+    memos.unshift({ pageId: page.id, title, content, tag: '' });
+    renderM();
+  } catch(e) { showToast('추가 실패'); }
 }
 
 async function delMemo(pageId, e) {
-e.stopPropagation();
-try {
-await fetch(`${PROXY}?path=pages/${pageId}`, {
-method: ‘PATCH’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ archived: true })
-});
-memos = memos.filter(m => m.pageId !== pageId);
-renderM();
-} catch(e) { showToast(‘삭제 실패’); }
+  e.stopPropagation();
+  try {
+    await fetch(`${PROXY}?path=pages/${pageId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archived: true })
+    });
+    memos = memos.filter(m => m.pageId !== pageId);
+    renderM();
+  } catch(e) { showToast('삭제 실패'); }
 }
 
 async function init() {
-await loadFromNotion();
+  await loadFromNotion();
 }
 init();
 </script>
-
 </body>
 </html>
