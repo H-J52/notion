@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Today's Review</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #0d0d0e;
+  --s1:    #141415;
+  --s2:    #1a1a1c;
+  --b1:    #232326;
+  --b2:    #2e2e32;
+  --b3:    #3a3a3f;
+  --tx:    #e5e5e9;
+  --tx2:   #7c7c88;
+  --tx3:   #404048;
+  --green: #6effa0;
+  --red:   #ff6060;
+  --pur:   #b48aff;
+  --font:  'DM Mono', monospace;
+}
+html, body { background: var(--bg); color: var(--tx); font-family: var(--font); font-size: 13px; margin: 0; padding: 0; overflow: hidden; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+.w { background: var(--s1); border: 1px solid var(--b2); border-radius: 0; padding: 20px 22px; display: flex; flex-direction: column; }
+.wlabel { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0; }
+.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--pur); flex-shrink: 0; }
+.review-fields { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.review-field { display: flex; flex-direction: column; gap: 4px; }
+.review-label { font-size: 10px; color: var(--tx3); letter-spacing: 0.06em; }
+.review-ta {
+  background: var(--s2); border: 1px solid var(--b1); border-radius: 7px;
+  padding: 9px 11px; font-size: 11px; color: var(--tx); font-family: var(--font);
+  outline: none; resize: none; height: 58px; line-height: 1.5;
+  transition: border-color 0.15s;
+}
+.review-ta:focus { border-color: var(--b3); }
+.review-ta::placeholder { color: var(--tx3); }
+.review-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-shrink: 0; }
+.tag-row { display: flex; gap: 6px; }
+.rtag-btn {
+  font-size: 10px; padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--b2); background: transparent;
+  color: var(--tx3); font-family: var(--font); cursor: pointer;
+  transition: all 0.15s;
+}
+.rtag-btn.active { border-color: var(--pur); color: var(--pur); background: rgba(180,138,255,0.08); }
+.abtn {
+  background: var(--s2); border: 1px solid var(--b2); border-radius: 7px;
+  padding: 8px 18px; font-size: 11px; color: var(--pur); font-family: var(--font);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.abtn:hover { background: var(--b1); }
+.abtn.saving { color: var(--tx3); }
+.review-saved { font-size: 10px; color: var(--green); margin-top: 8px; height: 14px; flex-shrink: 0; }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--b2); color: var(--tx); font-size: 11px; padding: 8px 16px; border-radius: 8px; pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="wlabel">
+    <span class="wdot"></span>Today's Review
+  </div>
+  <div class="review-fields">
+    <div class="review-field">
+      <div class="review-label">✅ 잘한 것</div>
+      <textarea class="review-ta" id="rv-good" placeholder="오늘 잘한 것..."></textarea>
+    </div>
+    <div class="review-field">
+      <div class="review-label">🔧 아쉬운 것</div>
+      <textarea class="review-ta" id="rv-bad" placeholder="아쉬웠던 것..."></textarea>
+    </div>
+    <div class="review-field">
+      <div class="review-label">📌 내일 할 것</div>
+      <textarea class="review-ta" id="rv-next" placeholder="내일 할 것..."></textarea>
+    </div>
+  </div>
+  <div class="review-footer">
+    <div class="tag-row">
+      <button class="rtag-btn active" id="rtag-good" onclick="setTag('Good')">👍 Good</button>
+      <button class="rtag-btn" id="rtag-bad" onclick="setTag('Bad')">👎 Bad</button>
+    </div>
+    <button class="abtn" id="save-btn" onclick="saveReview()">저장</button>
+  </div>
+  <div class="review-saved" id="review-saved"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID  = '365313d0a26d48898b47cef7bcf54a4a';
+const DATE_KEY = 'devflow_review_date';
+
+let reviewTag = 'Good';
+let todayPageId = null;
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function toDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function setTag(tag) {
+  reviewTag = tag;
+  document.getElementById('rtag-good').classList.toggle('active', tag === 'Good');
+  document.getElementById('rtag-bad').classList.toggle('active', tag === 'Bad');
+}
+
+// 오늘 리뷰가 이미 있으면 불러오기
+async function loadTodayReview() {
+  try {
+    const today = toDateStr(new Date());
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filter: { property: 'Date', title: { equals: today } }
+      })
+    });
+    const data = await res.json();
+    if (data.results?.length) {
+      const p = data.results[0];
+      todayPageId = p.id;
+      document.getElementById('rv-good').value  = p.properties['잘한것']?.rich_text?.[0]?.plain_text || '';
+      document.getElementById('rv-bad').value   = p.properties['아쉬운것']?.rich_text?.[0]?.plain_text || '';
+      document.getElementById('rv-next').value  = p.properties['내일할것']?.rich_text?.[0]?.plain_text || '';
+      const cond = p.properties['컨디션']?.select?.name;
+      if (cond) setTag(cond);
+      document.getElementById('review-saved').textContent = '✓ 오늘 리뷰 불러옴';
+      setTimeout(() => document.getElementById('review-saved').textContent = '', 2000);
+    }
+  } catch(e) {}
+}
+
+async function saveReview() {
+  const good = document.getElementById('rv-good').value.trim();
+  const bad  = document.getElementById('rv-bad').value.trim();
+  const next = document.getElementById('rv-next').value.trim();
+  if (!good && !bad && !next) { showToast('내용을 입력해주세요'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '저장중...';
+  btn.classList.add('saving');
+
+  const today = toDateStr(new Date());
+  const props = {
+    Date:    { title: [{ text: { content: today } }] },
+    '잘한것':  { rich_text: [{ text: { content: good } }] },
+    '아쉬운것': { rich_text: [{ text: { content: bad } }] },
+    '내일할것': { rich_text: [{ text: { content: next } }] },
+    '컨디션':  { select: { name: reviewTag } }
+  };
+
+  try {
+    if (todayPageId) {
+      // 오늘 리뷰 업데이트
+      await fetch(`${PROXY}?path=pages/${todayPageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ properties: props })
+      });
+    } else {
+      // 새 리뷰 생성
+      const res = await fetch(`${PROXY}?path=pages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent: { database_id: DB_ID }, properties: props })
+      });
+      const page = await res.json();
+      todayPageId = page.id;
+    }
+    document.getElementById('review-saved').textContent =
+      '✓ 저장됨 — ' + new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    setTimeout(() => document.getElementById('review-saved').textContent = '', 3000);
+  } catch(e) {
+    showToast('저장 실패');
+  }
+
+  btn.textContent = '저장';
+  btn.classList.remove('saving');
+}
+
+loadTodayReview();
+</script>
+
+</body>
+</html>
