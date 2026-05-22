@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -60,9 +59,9 @@ html, body {
   border-radius: 8px; padding: 12px 14px; flex-shrink: 0;
 }
 .wc:hover .xbtn { opacity: 1 !important; }
-.wc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.wc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
 .wc-cat { font-size: 11px; color: var(--tx2); }
-.wc-right { display: flex; align-items: center; gap: 7px; }
+.wc-right { display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; }
 .wbtn {
   width: 22px; height: 22px; border: 1px solid var(--b2); background: transparent;
   border-radius: 5px; color: var(--tx2); font-size: 15px; line-height: 1;
@@ -74,7 +73,10 @@ html, body {
   font-size: 22px; font-weight: 300; color: var(--tx);
   background: transparent; border: none; font-family: var(--font);
   width: 44px; text-align: center; outline: none; cursor: text;
+  -moz-appearance: textfield;
 }
+.wc-num::-webkit-outer-spin-button,
+.wc-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .wc-num:focus { color: var(--green); border-bottom: 1px solid var(--b3); }
 .wc-max { font-size: 10px; color: var(--tx3); white-space: nowrap; }
 .xbtn {
@@ -229,6 +231,5 @@ setInterval(() => {
   if (localStorage.getItem(WEEK_KEY) !== monday) { checkWeekReset(); renderW(); }
 }, 60000);
 </script>
-
 </body>
 </html>
