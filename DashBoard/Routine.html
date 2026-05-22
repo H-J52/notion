@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -269,22 +270,33 @@ async function resetRoutine() {
 async function checkDayReset() {
   const today = toDateStr(new Date());
   const last  = localStorage.getItem(DATE_KEY);
-  if (last && last !== today) {
-    await resetRoutine();
+  // 날짜가 다르면 (어제 이전) → 먼저 Notion DB 리셋 후 로드
+  if (last !== today) {
+    localStorage.setItem(DATE_KEY, today);
+    if (last) {
+      await resetRoutine();
+    }
   }
-  localStorage.setItem(DATE_KEY, today);
 }
 
-loadFromNotion();
+async function init() {
+  // 날짜 체크 먼저
+  await checkDayReset();
+  // 그 다음 로드 (이미 리셋됐으면 Done=false 상태로 읽어옴)
+  await loadFromNotion();
+}
 
-// 자정 체크
+init();
+
+// 자정 체크 (브라우저 열려있을 때)
 setInterval(async () => {
   const today = toDateStr(new Date());
   if (localStorage.getItem(DATE_KEY) !== today) {
-    await resetRoutine();
     localStorage.setItem(DATE_KEY, today);
+    await resetRoutine();
   }
 }, 60000);
 </script>
+
 </body>
 </html>
