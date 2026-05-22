@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #0d0d0e;
+  --s1:    #141415;
+  --s2:    #1a1a1c;
+  --b1:    #232326;
+  --b2:    #2e2e32;
+  --b3:    #3a3a3f;
+  --tx:    #e5e5e9;
+  --tx2:   #7c7c88;
+  --tx3:   #404048;
+  --green: #6effa0;
+  --red:   #ff6060;
+  --font:  'DM Mono', monospace;
+}
+html, body { background: var(--bg); color: var(--tx); font-family: var(--font); font-size: 13px; margin: 0; padding: 0; overflow: hidden; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+.w { background: var(--s1); border: 1px solid var(--b2); border-radius: 0; padding: 20px 22px; display: flex; flex-direction: column; }
+.wlabel { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0; }
+.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--tx3); flex-shrink: 0; }
+.wlabel-r { margin-left: auto; }
+.wlbtn { font-size: 9px; color: var(--tx3); background: none; border: none; font-family: var(--font); cursor: pointer; letter-spacing: 0.08em; transition: color 0.15s; padding: 0; }
+.wlbtn:hover { color: var(--tx2); }
+.memo-list { display: flex; flex-direction: column; gap: 6px; height: 320px; min-height: 320px; overflow-y: auto; flex-shrink: 0; }
+.memo-item { background: var(--s2); border: 1px solid var(--b1); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; transition: border-color 0.12s; }
+.memo-item:hover { border-color: var(--b2); }
+.memo-item:hover .xbtn { opacity: 1; }
+.memo-head { display: flex; align-items: center; justify-content: space-between; }
+.memo-title { font-size: 12px; color: var(--tx); flex: 1; }
+.memo-tag { font-size: 9px; color: var(--tx3); background: var(--b1); border-radius: 4px; padding: 2px 6px; white-space: nowrap; margin-left: 6px; }
+.xbtn { font-size: 10px; color: var(--tx3); background: none; border: none; cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s; font-family: var(--font); padding: 0 2px; }
+.xbtn:hover { color: var(--red); }
+.memo-content { font-size: 11px; color: var(--tx2); line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
+.add-row { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; flex-shrink: 0; }
+.add-row-inner { display: flex; gap: 6px; }
+.ainput { flex: 1; background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 8px 11px; font-size: 11px; color: var(--tx); font-family: var(--font); outline: none; transition: border-color 0.15s; }
+.ainput:focus { border-color: var(--b3); }
+.ainput::placeholder { color: var(--tx3); }
+textarea.ainput { resize: none; height: 60px; line-height: 1.5; }
+.asel { background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 8px; font-size: 11px; color: var(--tx2); font-family: var(--font); outline: none; cursor: pointer; flex-shrink: 0; }
+.abtn { background: var(--s2); border: 1px solid var(--b2); border-radius: 7px; padding: 8px 14px; font-size: 11px; color: var(--green); font-family: var(--font); cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+.abtn:hover { background: var(--b1); }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--b2); color: var(--tx); font-size: 11px; padding: 8px 16px; border-radius: 8px; pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="wlabel">
+    <span class="wdot"></span>Memo
+  </div>
+  <div class="memo-list" id="memo-list"></div>
+  <div class="add-row">
+    <input class="ainput" id="m-title" placeholder="제목">
+    <textarea class="ainput" id="m-content" placeholder="내용..."></textarea>
+    <div class="add-row-inner">
+      <select class="asel" id="m-tag"></select>
+      <button class="abtn" onclick="addMemo()" style="flex:1">추가</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID  = '838d3be1db5840ebaf4ae2cf9b0e91fd';
+let memos = [];
+
+function showToast(msg) {
+const el = document.getElementById(‘toast’);
+el.textContent = msg;
+el.classList.add(‘show’);
+setTimeout(() => el.classList.remove(‘show’), 2000);
+}
+
+function renderM() {
+const el = document.getElementById(‘memo-list’);
+el.innerHTML = ‘’;
+if (!memos.length) { el.innerHTML = ‘<div class="empty">메모 없음</div>’; return; }
+memos.forEach(m => {
+const d = document.createElement(‘div’);
+d.className = ‘memo-item’;
+d.innerHTML = `<div class="memo-head"> <span class="memo-title">${m.title}</span> ${m.tag ?`<span class="memo-tag">${m.tag}</span>`: ''} <button class="xbtn" onclick="delMemo('${m.pageId}', event)">✕</button> </div> ${m.content ?`<div class="memo-content">${m.content}</div>`: ''}`;
+el.appendChild(d);
+});
+}
+
+async function loadTagOptions() {
+try {
+const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+const data = await res.json();
+const options = data.properties?.Tag?.multi_select?.options || [];
+const sel = document.getElementById(‘m-tag’);
+sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join(’’);
+sel.innerHTML += ‘<option value="">—</option>’;
+} catch(e) {}
+}
+
+async function loadFromNotion() {
+try {
+const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+method: ‘POST’,
+headers: { ‘Content-Type’: ‘application/json’ },
+body: JSON.stringify({
+filter: { property: ‘Type’, select: { equals: ‘Memo’ } },
+sorts: [{ timestamp: ‘created_time’, direction: ‘descending’ }]
+})
+});
+const data = await res.json();
+memos = data.results.map(p => ({
+pageId: p.id,
+title: p.properties.Title.title[0]?.plain_text || ‘’,
+content: p.properties.Content?.rich_text?.[0]?.plain_text || ‘’,
+tag: p.properties.Tag?.multi_select?.[0]?.name || ‘’
+}));
+renderM();
+} catch(e) { showToast(‘로드 실패’); }
+}
+
+async function addMemo() {
+const title   = document.getElementById(‘m-title’).value.trim();
+const content = document.getElementById(‘m-content’).value.trim();
+const tag     = document.getElementById(‘m-tag’).value;
+if (!title) return;
+document.getElementById(‘m-title’).value = ‘’;
+document.getElementById(‘m-content’).value = ‘’;
+try {
+const res = await fetch(`${PROXY}?path=pages`, {
+method: ‘POST’,
+headers: { ‘Content-Type’: ‘application/json’ },
+body: JSON.stringify({
+parent: { database_id: DB_ID },
+properties: {
+Title: { title: [{ text: { content: title } }] },
+Content: { rich_text: [{ text: { content: content } }] },
+Type: { select: { name: ‘Memo’ } },
+Tag: tag ? { multi_select: [{ name: tag }] } : { multi_select: [] }
+}
+})
+});
+const page = await res.json();
+memos.unshift({ pageId: page.id, title, content, tag });
+renderM();
+} catch(e) { showToast(‘추가 실패’); }
+}
+
+async function delMemo(pageId, e) {
+e.stopPropagation();
+try {
+await fetch(`${PROXY}?path=pages/${pageId}`, {
+method: ‘PATCH’,
+headers: { ‘Content-Type’: ‘application/json’ },
+body: JSON.stringify({ archived: true })
+});
+memos = memos.filter(m => m.pageId !== pageId);
+renderM();
+} catch(e) { showToast(‘삭제 실패’); }
+}
+
+async function init() {
+await loadTagOptions();
+await loadFromNotion();
+}
+init();
+</script>
+
+</body>
+</html>
