@@ -54,6 +54,10 @@ var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
 var DB_ID = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 var memos = [];
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function showToast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
@@ -68,8 +72,8 @@ function renderM() {
   memos.forEach(function(m) {
     var d = document.createElement('div');
     d.className = 'mi';
-    d.innerHTML = '<div class="mi-head"><span class="mi-title">' + m.title + '</span><button class="xbtn" onclick="delMemo(\'' + m.pageId + '\', event)">✕</button></div>' +
-      (m.content ? '<div class="mi-content">' + m.content + '</div>' : '');
+    d.innerHTML = '<div class="mi-head"><span class="mi-title">' + esc(m.title) + '</span><button class="xbtn" onclick="delMemo(\'' + esc(m.pageId) + '\', event)">✕</button></div>' +
+      (m.content ? '<div class="mi-content">' + esc(m.content) + '</div>' : '');
     el.appendChild(d);
   });
 }
@@ -101,8 +105,6 @@ function addMemo() {
   var title = document.getElementById('m-title').value.trim();
   var content = document.getElementById('m-content').value.trim();
   if (!title) return;
-  document.getElementById('m-title').value = '';
-  document.getElementById('m-content').value = '';
   fetch(PROXY + '?path=pages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -118,6 +120,8 @@ function addMemo() {
   })
   .then(function(r){ return r.json(); })
   .then(function(page) {
+    document.getElementById('m-title').value = '';
+    document.getElementById('m-content').value = '';
     memos.unshift({ pageId: page.id, title: title, content: content });
     renderM();
   })

@@ -135,6 +135,10 @@ const MIN_SLOTS = 6;
 
 let goals = [];
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -162,9 +166,9 @@ function renderG() {
     d.className = 'ii' + (g.done ? ' done' : '');
     d.innerHTML = `
       <div class="ichk"></div>
-      <span class="itext">${g.t}</span>
-      ${(g.tags||[]).map(tag=>`<span class="itag">${tag}</span>`).join('')}
-      <button class="xbtn" onclick="delG('${g.pageId}', event)">✕</button>
+      <span class="itext">${esc(g.t)}</span>
+      ${(g.tags||[]).map(tag=>`<span class="itag">${esc(tag)}</span>`).join('')}
+      <button class="xbtn" onclick="delG('${esc(g.pageId)}', event)">✕</button>
     `;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleG(g); };
     el.appendChild(d);
@@ -184,7 +188,7 @@ async function loadTagOptions() {
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('g-tag');
-    sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    sel.innerHTML = options.map(o => `<option value="${esc(o.name)}">${esc(o.name)}</option>`).join('');
     sel.innerHTML += '<option value="">—</option>';
   } catch(e) {}
 }

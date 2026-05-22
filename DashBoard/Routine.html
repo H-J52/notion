@@ -143,6 +143,10 @@ const MIN_SLOTS = 6;
 
 let routines = []; // {id, pageId, t, done}
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -166,7 +170,7 @@ function renderR() {
   routines.forEach(r => {
     const d = document.createElement('div');
     d.className = 'ii' + (r.done ? ' done' : '');
-    d.innerHTML = `<div class="ichk"></div><span class="itext">${r.t}</span><button class="xbtn" onclick="delR('${r.pageId}',event)">✕</button>`;
+    d.innerHTML = `<div class="ichk"></div><span class="itext">${esc(r.t)}</span><button class="xbtn" onclick="delR('${esc(r.pageId)}',event)">✕</button>`;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleR(r); };
     el.appendChild(d);
   });
@@ -194,7 +198,6 @@ async function loadFromNotion() {
       done: p.properties.Done.checkbox
     }));
     renderR();
-    checkDayReset();
   } catch(e) {
     showToast('로드 실패');
   }
@@ -280,10 +283,8 @@ async function checkDayReset() {
 }
 
 async function init() {
-  // 날짜 체크 먼저
-  await checkDayReset();
-  // 그 다음 로드 (이미 리셋됐으면 Done=false 상태로 읽어옴)
   await loadFromNotion();
+  await checkDayReset();
 }
 
 init();

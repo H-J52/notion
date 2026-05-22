@@ -67,6 +67,10 @@ var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
 var DB_ID = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 var links = [];
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function showToast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
@@ -91,12 +95,12 @@ function renderL() {
   filtered.forEach(function(l) {
     var d = document.createElement('div');
     d.className = 'li';
-    d.innerHTML = '<span class="li-icon">🔗</span><div class="li-info"><span class="li-title">' + (l.title || getDomain(l.url)) + '</span><span class="li-url">' + getDomain(l.url) + '</span></div>' +
-      (l.tag ? '<span class="li-tag">' + l.tag + '</span>' : '') +
-      '<button class="xbtn" onclick="delLink(\'' + l.pageId + '\', event)">✕</button>';
+    d.innerHTML = '<span class="li-icon">🔗</span><div class="li-info"><span class="li-title">' + esc(l.title || getDomain(l.url)) + '</span><span class="li-url">' + esc(getDomain(l.url)) + '</span></div>' +
+      (l.tag ? '<span class="li-tag">' + esc(l.tag) + '</span>' : '') +
+      '<button class="xbtn" onclick="delLink(\'' + esc(l.pageId) + '\', event)">✕</button>';
     d.addEventListener('click', function(e) {
       if (e.target.classList.contains('xbtn')) return;
-      var href = l.url.startsWith('http') ? l.url : 'https://' + l.url; window.open(href, '_blank');
+      var href = l.url.startsWith('http') ? l.url : 'https://' + l.url; window.open(href, '_blank', 'noopener,noreferrer');
     });
     el.appendChild(d);
   });
@@ -124,7 +128,7 @@ function loadFromNotion() {
     // 태그 필터 업데이트
     var tags = [...new Set(links.map(function(l){ return l.tag; }).filter(Boolean))];
     var sel = document.getElementById('l-filter');
-    sel.innerHTML = '<option value="">전체</option>' + tags.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('');
+    sel.innerHTML = '<option value="">전체</option>' + tags.map(function(t){ return '<option value="' + esc(t) + '">' + esc(t) + '</option>'; }).join('');
     renderL();
   })
   .catch(function(){ showToast('로드 실패'); });

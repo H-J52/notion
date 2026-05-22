@@ -17,6 +17,11 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'path query parameter required' });
   }
 
+  const ALLOWED_PATH = /^(databases\/[0-9a-f-]{32,36}(\/query)?|pages\/[0-9a-f-]{32,36}|pages)$/;
+  if (!ALLOWED_PATH.test(notionPath)) {
+    return res.status(403).json({ error: 'Forbidden path' });
+  }
+
   const notionUrl = `https://api.notion.com/v1/${notionPath}`;
 
   try {

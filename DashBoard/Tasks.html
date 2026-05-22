@@ -149,6 +149,10 @@ const MIN_SLOTS = 6;
 
 let tasks = [];
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -187,10 +191,10 @@ function renderT() {
     d.innerHTML = `
       <div class="iprio ${prioClass(t.p)}"></div>
       <div class="ichk"></div>
-      <span class="itext">${t.t}</span>
-      ${(t.tags||[]).map(tag=>`<span class="itag">${tag}</span>`).join('')}
-      ${isCarried && !t.done ? `<span class="idate">${formatDate(t.createdAt)}</span>` : ''}
-      <button class="xbtn" onclick="delT('${t.pageId}', event)">✕</button>
+      <span class="itext">${esc(t.t)}</span>
+      ${(t.tags||[]).map(tag=>`<span class="itag">${esc(tag)}</span>`).join('')}
+      ${isCarried && !t.done ? `<span class="idate">${esc(formatDate(t.createdAt))}</span>` : ''}
+      <button class="xbtn" onclick="delT('${esc(t.pageId)}', event)">✕</button>
     `;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleT(t); };
     el.appendChild(d);
@@ -211,7 +215,7 @@ async function loadTagOptions() {
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('t-tag');
-    sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    sel.innerHTML = options.map(o => `<option value="${esc(o.name)}">${esc(o.name)}</option>`).join('');
     sel.innerHTML += '<option value="">—</option>';
   } catch(e) {}
 }
@@ -316,6 +320,7 @@ async function delT(pageId, e) {
 async function checkDayReset() {
   const today = toDateStr(new Date());
   const last  = localStorage.getItem(DATE_KEY);
+  localStorage.setItem(DATE_KEY, today);
   if (last && last !== today) {
     const doneTasks = tasks.filter(t => t.done);
     for (const t of doneTasks) {
@@ -327,7 +332,6 @@ async function checkDayReset() {
     }
     await loadFromNotion();
   }
-  localStorage.setItem(DATE_KEY, today);
 }
 
 async function init() {

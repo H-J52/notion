@@ -53,6 +53,10 @@ var DB_ID = '68ea8b611ad441aba16fe926b53fdcb5';
 var MIN_SLOTS = 6;
 var logs = [];
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function showToast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
@@ -69,7 +73,7 @@ function renderLog() {
   reversed.forEach(function(l) {
     var d = document.createElement('div');
     d.className = 'li';
-    d.innerHTML = '<span class="li-time">' + l.time + '</span><span class="li-txt">' + l.txt + '</span><button class="xbtn" onclick="delLog(\'' + l.pageId + '\', event)">✕</button>';
+    d.innerHTML = '<span class="li-time">' + esc(l.time) + '</span><span class="li-txt">' + esc(l.txt) + '</span><button class="xbtn" onclick="delLog(\'' + esc(l.pageId) + '\', event)">✕</button>';
     el.appendChild(d);
   });
   var ghostCount = MIN_SLOTS - logs.length;
