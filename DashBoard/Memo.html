@@ -65,7 +65,6 @@ textarea.ainput { resize: none; height: 60px; line-height: 1.5; }
     <input class="ainput" id="m-title" placeholder="제목">
     <textarea class="ainput" id="m-content" placeholder="내용..."></textarea>
     <div class="add-row-inner">
-      <select class="asel" id="m-tag"></select>
       <button class="abtn" onclick="addMemo()" style="flex:1">추가</button>
     </div>
   </div>
@@ -130,7 +129,6 @@ renderM();
 async function addMemo() {
 const title   = document.getElementById(‘m-title’).value.trim();
 const content = document.getElementById(‘m-content’).value.trim();
-const tag     = document.getElementById(‘m-tag’).value;
 if (!title) return;
 document.getElementById(‘m-title’).value = ‘’;
 document.getElementById(‘m-content’).value = ‘’;
@@ -144,12 +142,12 @@ properties: {
 Title: { title: [{ text: { content: title } }] },
 Content: { rich_text: [{ text: { content: content } }] },
 Type: { select: { name: ‘Memo’ } },
-Tag: tag ? { multi_select: [{ name: tag }] } : { multi_select: [] }
+Tag: { multi_select: [] }
 }
 })
 });
 const page = await res.json();
-memos.unshift({ pageId: page.id, title, content, tag });
+memos.unshift({ pageId: page.id, title, content, tag: ‘’ });
 renderM();
 } catch(e) { showToast(‘추가 실패’); }
 }
@@ -168,7 +166,6 @@ renderM();
 }
 
 async function init() {
-await loadTagOptions();
 await loadFromNotion();
 }
 init();
