@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Link Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #0d0d0e;
+  --s1:    #141415;
+  --s2:    #1a1a1c;
+  --b1:    #232326;
+  --b2:    #2e2e32;
+  --b3:    #3a3a3f;
+  --tx:    #e5e5e9;
+  --tx2:   #7c7c88;
+  --tx3:   #404048;
+  --green: #6effa0;
+  --red:   #ff6060;
+  --blue:  #6ea8ff;
+  --font:  'DM Mono', monospace;
+}
+html, body { background: var(--bg); color: var(--tx); font-family: var(--font); font-size: 13px; margin: 0; padding: 0; overflow: hidden; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+.w { background: var(--s1); border: 1px solid var(--b2); border-radius: 0; padding: 20px 22px; display: flex; flex-direction: column; }
+.wlabel { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); display: flex; align-items: center; gap: 6px; margin-bottom: 10px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0; }
+.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+.search-row { display: flex; gap: 6px; margin-bottom: 10px; flex-shrink: 0; }
+.sinput { flex: 1; background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 7px 11px; font-size: 11px; color: var(--tx); font-family: var(--font); outline: none; transition: border-color 0.15s; }
+.sinput:focus { border-color: var(--b3); }
+.sinput::placeholder { color: var(--tx3); }
+.fsel { background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 7px 8px; font-size: 11px; color: var(--tx2); font-family: var(--font); outline: none; cursor: pointer; flex-shrink: 0; }
+.link-list { display: flex; flex-direction: column; gap: 6px; height: 240px; min-height: 240px; overflow-y: auto; flex-shrink: 0; }
+.li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 8px; transition: border-color 0.12s; text-decoration: none; flex-shrink: 0;
+}
+.li:hover { border-color: var(--b2); }
+.li:hover .xbtn { opacity: 1; }
+.li-icon { font-size: 14px; flex-shrink: 0; }
+.li-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.li-title { font-size: 11px; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-url { font-size: 9px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-tag { font-size: 9px; color: var(--tx3); background: var(--b1); border-radius: 4px; padding: 2px 6px; white-space: nowrap; flex-shrink: 0; }
+.xbtn { font-size: 10px; color: var(--tx3); background: none; border: none; cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s; font-family: var(--font); padding: 0 2px; flex-shrink: 0; }
+.xbtn:hover { color: var(--red); }
+.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
+.add-row { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; flex-shrink: 0; }
+.add-row-inner { display: flex; gap: 6px; }
+.ainput { flex: 1; background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 8px 11px; font-size: 11px; color: var(--tx); font-family: var(--font); outline: none; transition: border-color 0.15s; }
+.ainput:focus { border-color: var(--b3); }
+.ainput::placeholder { color: var(--tx3); }
+.asel { background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 8px; font-size: 11px; color: var(--tx2); font-family: var(--font); outline: none; cursor: pointer; flex-shrink: 0; }
+.abtn { background: var(--s2); border: 1px solid var(--b2); border-radius: 7px; padding: 8px 14px; font-size: 11px; color: var(--blue); font-family: var(--font); cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+.abtn:hover { background: var(--b1); }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--b2); color: var(--tx); font-size: 11px; padding: 8px 16px; border-radius: 8px; pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="wlabel">
+    <span class="wdot"></span>Link Vault
+  </div>
+  <div class="search-row">
+    <input class="sinput" id="l-search" placeholder="🔍 검색..." oninput="renderL()">
+    <select class="fsel" id="l-filter" onchange="renderL()">
+      <option value="">전체</option>
+    </select>
+  </div>
+  <div class="link-list" id="link-list"></div>
+  <div class="add-row">
+    <input class="ainput" id="l-url" placeholder="URL" onkeydown="if(event.key==='Enter')addLink()">
+    <div class="add-row-inner">
+      <input class="ainput" id="l-title" placeholder="제목 (선택)">
+      <select class="asel" id="l-tag"></select>
+      <button class="abtn" onclick="addLink()">추가</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
+const DB_ID  = '838d3be1db5840ebaf4ae2cf9b0e91fd';
+let links = [];
+
+function showToast(msg) {
+const el = document.getElementById(‘toast’);
+el.textContent = msg;
+el.classList.add(‘show’);
+setTimeout(() => el.classList.remove(‘show’), 2000);
+}
+
+function getDomain(url) {
+try { return new URL(url).hostname.replace(‘www.’, ‘’); } catch(e) { return url; }
+}
+
+function renderL() {
+const el = document.getElementById(‘link-list’);
+const q = document.getElementById(‘l-search’).value.toLowerCase();
+const f = document.getElementById(‘l-filter’).value;
+el.innerHTML = ‘’;
+const filtered = links.filter(l =>
+(!q || l.title.toLowerCase().includes(q) || l.url.toLowerCase().includes(q)) &&
+(!f || l.tag === f)
+);
+if (!filtered.length) { el.innerHTML = ‘<div class="empty">링크 없음</div>’; return; }
+filtered.forEach(l => {
+const d = document.createElement(‘div’);
+d.className = ‘li’;
+d.style.cursor = ‘pointer’;
+d.innerHTML = `<span class="li-icon">🔗</span> <div class="li-info"> <span class="li-title">${l.title || getDomain(l.url)}</span> <span class="li-url">${getDomain(l.url)}</span> </div> ${l.tag ?`<span class="li-tag">${l.tag}</span>`: ''} <button class="xbtn" onclick="delLink('${l.pageId}', event)">✕</button>`;
+d.onclick = e => { if(e.target.classList.contains(‘xbtn’)) return; window.open(l.url, ‘_blank’); };
+el.appendChild(d);
+});
+}
+
+async function loadTagOptions() {
+try {
+const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+const data = await res.json();
+const options = data.properties?.Tag?.multi_select?.options || [];
+const tagSel = document.getElementById(‘l-tag’);
+tagSel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join(’’);
+tagSel.innerHTML += ‘<option value="">—</option>’;
+const filterSel = document.getElementById(‘l-filter’);
+filterSel.innerHTML = ‘<option value="">전체</option>’ + options.map(o => `<option value="${o.name}">${o.name}</option>`).join(’’);
+} catch(e) {}
+}
+
+async function loadFromNotion() {
+try {
+const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
+method: ‘POST’,
+headers: { ‘Content-Type’: ‘application/json’ },
+body: JSON.stringify({
+filter: { property: ‘Type’, select: { equals: ‘Link’ } },
+sorts: [{ timestamp: ‘created_time’, direction: ‘descending’ }]
+})
+});
+const data = await res.json();
+links = data.results.map(p => ({
+pageId: p.id,
+title: p.properties.Title.title[0]?.plain_text || ‘’,
+url: p.properties[‘URL’]?.url || ‘’,
+tag: p.properties.Tag?.multi_select?.[0]?.name || ‘’
+}));
+renderL();
+} catch(e) { showToast(‘로드 실패’); }
+}
+
+async function addLink() {
+const url   = document.getElementById(‘l-url’).value.trim();
+const title = document.getElementById(‘l-title’).value.trim();
+const tag   = document.getElementById(‘l-tag’).value;
+if (!url) return;
+document.getElementById(‘l-url’).value = ‘’;
+document.getElementById(‘l-title’).value = ‘’;
+try {
+const res = await fetch(`${PROXY}?path=pages`, {
+method: ‘POST’,
+headers: { ‘Content-Type’: ‘application/json’ },
+body: JSON.stringify({
+parent: { database_id: DB_ID },
+properties: {
+Title: { title: [{ text: { content: title || url } }] },
+‘URL’: { url },
+Type: { select: { name: ‘Link’ } },
+Tag: tag ? { multi_select: [{ name: tag }] } : { multi_select: [] }
+}
+})
+});
+const page = await res.json();
+links.unshift({ pageId: page.id, title: title || url, url, tag });
+renderL();
+} catch(e) { showToast(‘추가 실패’); }
+}
+
+async function delLink(pageId, e) {
+e.stopPropagation();
+try {
+await fetch(`${PROXY}?path=pages/${pageId}`, {
+method: ‘PATCH’,
+headers: { ‘Content-Type’: ‘application/json’ },
+body: JSON.stringify({ archived: true })
+});
+links = links.filter(l => l.pageId !== pageId);
+renderL();
+} catch(e) { showToast(‘삭제 실패’); }
+}
+
+async function init() {
+await loadTagOptions();
+await loadFromNotion();
+}
+init();
+</script>
+
+</body>
+</html>
