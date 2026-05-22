@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -9,187 +8,151 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:    #0d0d0e;
-  --s1:    #141415;
-  --s2:    #1a1a1c;
-  --b1:    #232326;
-  --b2:    #2e2e32;
-  --b3:    #3a3a3f;
-  --tx:    #e5e5e9;
-  --tx2:   #7c7c88;
-  --tx3:   #404048;
-  --green: #6effa0;
-  --red:   #ff6060;
-  --teal:  #4ecdc4;
-  --font:  'DM Mono', monospace;
+  --bg:#0d0d0e; --s1:#141415; --s2:#1a1a1c; --b1:#232326; --b2:#2e2e32; --b3:#3a3a3f;
+  --tx:#e5e5e9; --tx2:#7c7c88; --tx3:#404048; --green:#6effa0; --red:#ff6060; --teal:#4ecdc4;
+  --font:'DM Mono',monospace;
 }
-html, body { background: var(--bg); color: var(--tx); font-family: var(--font); font-size: 13px; margin: 0; padding: 0; overflow: hidden; }
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
-.w { background: var(--s1); border: 1px solid var(--b2); border-radius: 0; padding: 20px 22px; display: flex; flex-direction: column; }
-.wlabel { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font-family: 'Black Han Sans', sans-serif; flex-shrink: 0; }
-.wdot { width: 4px; height: 4px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
-.log-list { display: flex; flex-direction: column; gap: 5px; height: 280px; min-height: 280px; overflow-y: auto; flex-shrink: 0; }
-.log-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; transition: border-color 0.12s; flex-shrink: 0; }
-.log-item:hover { border-color: var(--b2); }
-.log-item:hover .xbtn { opacity: 1; }
-.log-time { font-size: 10px; color: var(--teal); white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
-.log-txt { font-size: 11px; color: var(--tx); flex: 1; line-height: 1.5; word-break: break-all; }
-.log-tag { font-size: 9px; color: var(--tx3); background: var(--b1); border-radius: 4px; padding: 2px 6px; white-space: nowrap; flex-shrink: 0; }
-.xbtn { font-size: 10px; color: var(--tx3); background: none; border: none; cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s; font-family: var(--font); padding: 0 2px; flex-shrink: 0; }
-.xbtn:hover { color: var(--red); }
-.log-ghost { opacity: 0; pointer-events: none; height: 34px; flex-shrink: 0; }
-.empty { font-size: 11px; color: var(--tx3); padding: 12px 0; text-align: center; }
-.add-row { display: flex; gap: 6px; margin-top: 10px; flex-shrink: 0; }
-.ainput { flex: 1; background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 8px 11px; font-size: 11px; color: var(--tx); font-family: var(--font); outline: none; transition: border-color 0.15s; }
-.ainput:focus { border-color: var(--b3); }
-.ainput::placeholder { color: var(--tx3); }
-.asel { background: var(--s2); border: 1px solid var(--b1); border-radius: 7px; padding: 8px; font-size: 11px; color: var(--tx2); font-family: var(--font); outline: none; cursor: pointer; flex-shrink: 0; }
-.abtn { background: var(--s2); border: 1px solid var(--b2); border-radius: 7px; padding: 8px 14px; font-size: 11px; color: var(--teal); font-family: var(--font); cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
-.abtn:hover { background: var(--b1); }
-.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--b2); color: var(--tx); font-size: 11px; padding: 8px 16px; border-radius: 8px; pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 99; }
-.toast.show { opacity: 1; }
+html,body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:13px;margin:0;padding:0;overflow:hidden;}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.w{background:var(--s1);border:1px solid var(--b2);border-radius:0;padding:20px 22px;display:flex;flex-direction:column;}
+.wlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);display:flex;align-items:center;gap:6px;margin-bottom:14px;font-family:'Black Han Sans',sans-serif;flex-shrink:0;}
+.wdot{width:4px;height:4px;border-radius:50%;background:var(--teal);flex-shrink:0;}
+.log-list{display:flex;flex-direction:column;gap:5px;height:320px;min-height:320px;overflow-y:auto;flex-shrink:0;}
+.li{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;transition:border-color .12s;flex-shrink:0;}
+.li:hover{border-color:var(--b2);}
+.li:hover .xbtn{opacity:1;}
+.li-time{font-size:10px;color:var(--teal);white-space:nowrap;flex-shrink:0;margin-top:1px;}
+.li-txt{font-size:11px;color:var(--tx);flex:1;line-height:1.5;word-break:break-all;}
+.li-ghost{opacity:0;pointer-events:none;height:34px;flex-shrink:0;}
+.xbtn{font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;opacity:0;transition:opacity .12s,color .12s;font-family:var(--font);padding:0 2px;flex-shrink:0;}
+.xbtn:hover{color:var(--red);}
+.empty{font-size:11px;color:var(--tx3);padding:12px 0;text-align:center;}
+.add-row{display:flex;gap:6px;margin-top:10px;flex-shrink:0;}
+.ainput{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--tx);font-family:var(--font);outline:none;transition:border-color .15s;}
+.ainput:focus{border-color:var(--b3);}
+.ainput::placeholder{color:var(--tx3);}
+.abtn{background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 14px;font-size:11px;color:var(--teal);font-family:var(--font);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.abtn:hover{background:var(--b1);}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--b2);color:var(--tx);font-size:11px;padding:8px 16px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;z-index:99;}
+.toast.show{opacity:1;}
 </style>
 </head>
 <body>
 <div class="w">
-  <div class="wlabel">
-    <span class="wdot"></span>Dev Log
-  </div>
+  <div class="wlabel"><span class="wdot"></span>Dev Log</div>
   <div class="log-list" id="log-list"></div>
   <div class="add-row">
-    <input class="ainput" id="log-inp" placeholder="+ 지금 뭐 했는지 한 줄..." onkeydown="if(event.key==='Enter')addLog()">
-    <select class="asel" id="log-tag"></select>
+    <input class="ainput" id="log-inp" placeholder="+ 지금 뭐 했는지 한 줄...">
     <button class="abtn" onclick="addLog()">기록</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
-const DB_ID    = '68ea8b611ad441aba16fe926b53fdcb5';
-const DATE_KEY = 'devflow_devlog_date';
-const MIN_SLOTS = 6;
-
-let logs = [];
+var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
+var DB_ID = '68ea8b611ad441aba16fe926b53fdcb5';
+var MIN_SLOTS = 6;
+var logs = [];
 
 function showToast(msg) {
-const el = document.getElementById(‘toast’);
-el.textContent = msg;
-el.classList.add(‘show’);
-setTimeout(() => el.classList.remove(‘show’), 2000);
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 2000);
 }
 
-function toDateStr(d) { return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
-function p(x) { return String(x).padStart(2, ‘0’); }
+function pad(x) { return String(x).padStart(2,'0'); }
 
 function renderLog() {
-const el = document.getElementById(‘log-list’);
-el.innerHTML = ‘’;
-if (!logs.length) {
-el.innerHTML = ‘<div class="empty">오늘 기록 없음</div>’;
-// 더미
-for (let i = 0; i < MIN_SLOTS; i++) {
-const g = document.createElement(‘div’);
-g.className = ‘log-item log-ghost’;
-el.appendChild(g);
+  var el = document.getElementById('log-list');
+  el.innerHTML = '';
+  var reversed = logs.slice().reverse();
+  reversed.forEach(function(l) {
+    var d = document.createElement('div');
+    d.className = 'li';
+    d.innerHTML = '<span class="li-time">' + l.time + '</span><span class="li-txt">' + l.txt + '</span><button class="xbtn" onclick="delLog(\'' + l.pageId + '\', event)">✕</button>';
+    el.appendChild(d);
+  });
+  var ghostCount = MIN_SLOTS - logs.length;
+  for (var i = 0; i < ghostCount; i++) {
+    var g = document.createElement('div');
+    g.className = 'li li-ghost';
+    el.appendChild(g);
+  }
 }
-return;
+
+function loadFromNotion() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var dateStr = today.toISOString().slice(0,10);
+  fetch(PROXY + '?path=databases/' + DB_ID + '/query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      filter: { property: 'Date', date: { on_or_after: dateStr } },
+      sorts: [{ timestamp: 'created_time', direction: 'ascending' }]
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    logs = data.results.map(function(p) {
+      return {
+        pageId: p.id,
+        time: (p.properties.Time && p.properties.Time.rich_text[0] && p.properties.Time.rich_text[0].plain_text) || '',
+        txt: (p.properties.Content && p.properties.Content.title[0] && p.properties.Content.title[0].plain_text) || ''
+      };
+    });
+    renderLog();
+  })
+  .catch(function(){ showToast('로드 실패'); });
 }
-[…logs].reverse().forEach(l => {
-const d = document.createElement(‘div’);
-d.className = ‘log-item’;
-d.innerHTML = `<span class="log-time">${l.time}</span> <span class="log-txt">${l.txt}</span> ${l.tag ?`<span class="log-tag">${l.tag}</span>`: ''} <button class="xbtn" onclick="delLog('${l.pageId}', event)">✕</button>`;
-el.appendChild(d);
+
+function addLog() {
+  var v = document.getElementById('log-inp').value.trim();
+  if (!v) return;
+  document.getElementById('log-inp').value = '';
+  var n = new Date();
+  var time = pad(n.getHours()) + ':' + pad(n.getMinutes());
+  var dateStr = n.toISOString().slice(0,10);
+  fetch(PROXY + '?path=pages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      parent: { database_id: DB_ID },
+      properties: {
+        Content: { title: [{ text: { content: v } }] },
+        Time: { rich_text: [{ text: { content: time } }] },
+        Date: { date: { start: dateStr } },
+        Tag: { multi_select: [] }
+      }
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(page) {
+    logs.push({ pageId: page.id, time: time, txt: v });
+    renderLog();
+  })
+  .catch(function(){ showToast('추가 실패'); });
+}
+
+function delLog(pageId, e) {
+  e.stopPropagation();
+  fetch(PROXY + '?path=pages/' + pageId, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ archived: true })
+  })
+  .then(function() {
+    logs = logs.filter(function(l){ return l.pageId !== pageId; });
+    renderLog();
+  })
+  .catch(function(){ showToast('삭제 실패'); });
+}
+
+document.getElementById('log-inp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addLog();
 });
-const ghostCount = MIN_SLOTS - logs.length;
-for (let i = 0; i < ghostCount; i++) {
-const g = document.createElement(‘div’);
-g.className = ‘log-item log-ghost’;
-el.appendChild(g);
-}
-}
 
-async function loadTagOptions() {
-try {
-const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
-const data = await res.json();
-const options = data.properties?.Tag?.multi_select?.options || [];
-const sel = document.getElementById(‘log-tag’);
-sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join(’’);
-sel.innerHTML += ‘<option value="">—</option>’;
-} catch(e) {}
-}
-
-async function loadFromNotion() {
-try {
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
-method: ‘POST’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({
-filter: { property: ‘Date’, date: { on_or_after: today.toISOString().slice(0, 10) } },
-sorts: [{ property: ‘Date’, direction: ‘ascending’ }]
-})
-});
-const data = await res.json();
-logs = data.results.map(p => ({
-pageId: p.id,
-time: p.properties.Time?.rich_text?.[0]?.plain_text || ‘’,
-txt:  p.properties.Content.title[0]?.plain_text || ‘’,
-tag:  p.properties.Tag?.multi_select?.[0]?.name || ‘’
-}));
-renderLog();
-} catch(e) { showToast(‘로드 실패’); }
-}
-
-async function addLog() {
-const v = document.getElementById(‘log-inp’).value.trim();
-if (!v) return;
-const tag = document.getElementById(‘log-tag’).value;
-document.getElementById(‘log-inp’).value = ‘’;
-const n = new Date();
-const time = `${p(n.getHours())}:${p(n.getMinutes())}`;
-const dateStr = n.toISOString().slice(0, 10);
-try {
-const res = await fetch(`${PROXY}?path=pages`, {
-method: ‘POST’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({
-parent: { database_id: DB_ID },
-properties: {
-Content: { title: [{ text: { content: v } }] },
-Time: { rich_text: [{ text: { content: time } }] },
-Date: { date: { start: dateStr } },
-Tag: tag ? { multi_select: [{ name: tag }] } : { multi_select: [] }
-}
-})
-});
-const page = await res.json();
-logs.push({ pageId: page.id, time, txt: v, tag });
-renderLog();
-} catch(e) { showToast(‘추가 실패’); }
-}
-
-async function delLog(pageId, e) {
-e.stopPropagation();
-try {
-await fetch(`${PROXY}?path=pages/${pageId}`, {
-method: ‘PATCH’,
-headers: { ‘Content-Type’: ‘application/json’ },
-body: JSON.stringify({ archived: true })
-});
-logs = logs.filter(l => l.pageId !== pageId);
-renderLog();
-} catch(e) { showToast(‘삭제 실패’); }
-}
-
-async function init() {
-await loadTagOptions();
-await loadFromNotion();
-}
-init();
+loadFromNotion();
 </script>
-
 </body>
 </html>
