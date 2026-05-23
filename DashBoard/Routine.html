@@ -274,12 +274,9 @@ async function resetRoutine() {
 async function checkDayReset() {
   const today = toDateStr(new Date());
   const last  = localStorage.getItem(DATE_KEY);
-  // 날짜가 다르면 (어제 이전) → 먼저 Notion DB 리셋 후 로드
   if (last !== today) {
     localStorage.setItem(DATE_KEY, today);
-    if (last) {
-      await resetRoutine();
-    }
+    await resetRoutine();
   }
 }
 
