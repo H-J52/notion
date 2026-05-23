@@ -142,12 +142,17 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
+const DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID    = 'e7f1b0f0e0c345ec85f2224abe15d617';
 const DATE_KEY = 'devflow_tasks_date';
 const MIN_SLOTS = 6;
 
 let tasks = [];
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -187,10 +192,10 @@ function renderT() {
     d.innerHTML = `
       <div class="iprio ${prioClass(t.p)}"></div>
       <div class="ichk"></div>
-      <span class="itext">${t.t}</span>
-      ${(t.tags||[]).map(tag=>`<span class="itag">${tag}</span>`).join('')}
-      ${isCarried && !t.done ? `<span class="idate">${formatDate(t.createdAt)}</span>` : ''}
-      <button class="xbtn" onclick="delT('${t.pageId}', event)">✕</button>
+      <span class="itext">${esc(t.t)}</span>
+      ${(t.tags||[]).map(tag=>`<span class="itag">${esc(tag)}</span>`).join('')}
+      ${isCarried && !t.done ? `<span class="idate">${esc(formatDate(t.createdAt))}</span>` : ''}
+      <button class="xbtn" onclick="delT('${esc(t.pageId)}', event)">✕</button>
     `;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleT(t); };
     el.appendChild(d);
@@ -207,11 +212,11 @@ function renderT() {
 
 async function loadTagOptions() {
   try {
-    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`, { headers: { 'x-dashboard-secret': DASHBOARD_SECRET } });
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('t-tag');
-    sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    sel.innerHTML = options.map(o => `<option value="${esc(o.name)}">${esc(o.name)}</option>`).join('');
     sel.innerHTML += '<option value="">—</option>';
   } catch(e) {}
 }
@@ -224,7 +229,7 @@ async function loadFromNotion() {
 
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         filter: {
           or: [
@@ -262,7 +267,7 @@ async function toggleT(t) {
   try {
     await fetch(`${PROXY}?path=pages/${t.pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         properties: {
           Status: { select: { name: t.done ? 'Done' : 'Todo' } },
@@ -282,7 +287,7 @@ async function addT() {
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         parent: { database_id: DB_ID },
         properties: {
@@ -304,7 +309,7 @@ async function delT(pageId, e) {
   try {
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ archived: true })
     });
     tasks = tasks.filter(t => t.pageId !== pageId);
@@ -316,18 +321,18 @@ async function delT(pageId, e) {
 async function checkDayReset() {
   const today = toDateStr(new Date());
   const last  = localStorage.getItem(DATE_KEY);
+  localStorage.setItem(DATE_KEY, today);
   if (last && last !== today) {
     const doneTasks = tasks.filter(t => t.done);
     for (const t of doneTasks) {
       await fetch(`${PROXY}?path=pages/${t.pageId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
         body: JSON.stringify({ archived: true })
       });
     }
     await loadFromNotion();
   }
-  localStorage.setItem(DATE_KEY, today);
 }
 
 async function init() {

@@ -136,12 +136,17 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
+const DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID  = '962fcac506f04e3fbecc03143c27ef15';
 const DATE_KEY = 'devflow_routine_date';
 const MIN_SLOTS = 6;
 
 let routines = []; // {id, pageId, t, done}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -166,7 +171,7 @@ function renderR() {
   routines.forEach(r => {
     const d = document.createElement('div');
     d.className = 'ii' + (r.done ? ' done' : '');
-    d.innerHTML = `<div class="ichk"></div><span class="itext">${r.t}</span><button class="xbtn" onclick="delR('${r.pageId}',event)">✕</button>`;
+    d.innerHTML = `<div class="ichk"></div><span class="itext">${esc(r.t)}</span><button class="xbtn" onclick="delR('${esc(r.pageId)}',event)">✕</button>`;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleR(r); };
     el.appendChild(d);
   });
@@ -184,7 +189,7 @@ async function loadFromNotion() {
   try {
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ sorts: [{ property: 'Order', direction: 'ascending' }] })
     });
     const data = await res.json();
@@ -194,7 +199,6 @@ async function loadFromNotion() {
       done: p.properties.Done.checkbox
     }));
     renderR();
-    checkDayReset();
   } catch(e) {
     showToast('로드 실패');
   }
@@ -206,7 +210,7 @@ async function toggleR(r) {
   try {
     await fetch(`${PROXY}?path=pages/${r.pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ properties: { Done: { checkbox: r.done } } })
     });
   } catch(e) {
@@ -221,7 +225,7 @@ async function addR() {
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         parent: { database_id: DB_ID },
         properties: {
@@ -244,7 +248,7 @@ async function delR(pageId, e) {
   try {
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ archived: true })
     });
     routines = routines.filter(r => r.pageId !== pageId);
@@ -259,7 +263,7 @@ async function resetRoutine() {
     r.done = false;
     await fetch(`${PROXY}?path=pages/${r.pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ properties: { Done: { checkbox: false } } })
     });
   }
@@ -280,10 +284,8 @@ async function checkDayReset() {
 }
 
 async function init() {
-  // 날짜 체크 먼저
-  await checkDayReset();
-  // 그 다음 로드 (이미 리셋됐으면 Done=false 상태로 읽어옴)
   await loadFromNotion();
+  await checkDayReset();
 }
 
 init();

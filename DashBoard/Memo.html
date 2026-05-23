@@ -50,9 +50,14 @@ textarea.ainput{resize:none;height:60px;line-height:1.5;}
 </div>
 <div class="toast" id="toast"></div>
 <script>
+var DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
 var DB_ID = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 var memos = [];
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function showToast(msg) {
   var el = document.getElementById('toast');
@@ -68,8 +73,8 @@ function renderM() {
   memos.forEach(function(m) {
     var d = document.createElement('div');
     d.className = 'mi';
-    d.innerHTML = '<div class="mi-head"><span class="mi-title">' + m.title + '</span><button class="xbtn" onclick="delMemo(\'' + m.pageId + '\', event)">✕</button></div>' +
-      (m.content ? '<div class="mi-content">' + m.content + '</div>' : '');
+    d.innerHTML = '<div class="mi-head"><span class="mi-title">' + esc(m.title) + '</span><button class="xbtn" onclick="delMemo(\'' + esc(m.pageId) + '\', event)">✕</button></div>' +
+      (m.content ? '<div class="mi-content">' + esc(m.content) + '</div>' : '');
     el.appendChild(d);
   });
 }
@@ -77,7 +82,7 @@ function renderM() {
 function loadFromNotion() {
   fetch(PROXY + '?path=databases/' + DB_ID + '/query', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
     body: JSON.stringify({
       filter: { property: 'Type', select: { equals: 'Memo' } },
       sorts: [{ timestamp: 'created_time', direction: 'descending' }]
@@ -101,11 +106,9 @@ function addMemo() {
   var title = document.getElementById('m-title').value.trim();
   var content = document.getElementById('m-content').value.trim();
   if (!title) return;
-  document.getElementById('m-title').value = '';
-  document.getElementById('m-content').value = '';
   fetch(PROXY + '?path=pages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
     body: JSON.stringify({
       parent: { database_id: DB_ID },
       properties: {
@@ -118,6 +121,8 @@ function addMemo() {
   })
   .then(function(r){ return r.json(); })
   .then(function(page) {
+    document.getElementById('m-title').value = '';
+    document.getElementById('m-content').value = '';
     memos.unshift({ pageId: page.id, title: title, content: content });
     renderM();
   })
@@ -128,7 +133,7 @@ function delMemo(pageId, e) {
   e.stopPropagation();
   fetch(PROXY + '?path=pages/' + pageId, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
     body: JSON.stringify({ archived: true })
   })
   .then(function() {

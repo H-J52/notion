@@ -128,12 +128,17 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
+const DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID    = 'dde3b94ed40e4bf6876f539dd46d4c2e';
 const DATE_KEY = 'devflow_goals_date';
 const MIN_SLOTS = 6;
 
 let goals = [];
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -162,9 +167,9 @@ function renderG() {
     d.className = 'ii' + (g.done ? ' done' : '');
     d.innerHTML = `
       <div class="ichk"></div>
-      <span class="itext">${g.t}</span>
-      ${(g.tags||[]).map(tag=>`<span class="itag">${tag}</span>`).join('')}
-      <button class="xbtn" onclick="delG('${g.pageId}', event)">✕</button>
+      <span class="itext">${esc(g.t)}</span>
+      ${(g.tags||[]).map(tag=>`<span class="itag">${esc(tag)}</span>`).join('')}
+      <button class="xbtn" onclick="delG('${esc(g.pageId)}', event)">✕</button>
     `;
     d.onclick = e => { if(e.target.classList.contains('xbtn')) return; toggleG(g); };
     el.appendChild(d);
@@ -180,11 +185,11 @@ function renderG() {
 
 async function loadTagOptions() {
   try {
-    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`, { headers: { 'x-dashboard-secret': DASHBOARD_SECRET } });
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('g-tag');
-    sel.innerHTML = options.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    sel.innerHTML = options.map(o => `<option value="${esc(o.name)}">${esc(o.name)}</option>`).join('');
     sel.innerHTML += '<option value="">—</option>';
   } catch(e) {}
 }
@@ -194,7 +199,7 @@ async function loadFromNotion() {
     const monday = getMondayStr();
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         filter: { property: 'Week', rich_text: { equals: monday } },
         sorts: [{ timestamp: 'created_time', direction: 'ascending' }]
@@ -219,7 +224,7 @@ async function toggleG(g) {
   try {
     await fetch(`${PROXY}?path=pages/${g.pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         properties: { Status: { select: { name: g.done ? 'Done' : 'Todo' } } }
       })
@@ -236,7 +241,7 @@ async function addG() {
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         parent: { database_id: DB_ID },
         properties: {
@@ -258,7 +263,7 @@ async function delG(pageId, e) {
   try {
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ archived: true })
     });
     goals = goals.filter(g => g.pageId !== pageId);

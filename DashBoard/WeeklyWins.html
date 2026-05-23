@@ -133,6 +133,10 @@ const WC = ['#6effa0','#ffd166','#ff6060','#6ea8ff','#b48aff','#4ecdc4'];
 let wins = [];
 let seed = 1;
 
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function getMondayStr() {
   const d = new Date();
   const day = d.getDay();
@@ -150,7 +154,7 @@ function renderW() {
     d.className = 'wc';
     d.innerHTML = `
       <div class="wc-top">
-        <span class="wc-cat">${w.cat}</span>
+        <span class="wc-cat">${esc(w.cat)}</span>
         <div class="wc-right">
           <button class="wbtn" onclick="setW(${w.id}, -1, true)">−</button>
           <input class="wc-num" id="wn${w.id}" value="${w.n}" type="number"
