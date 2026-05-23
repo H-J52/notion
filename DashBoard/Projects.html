@@ -129,11 +129,16 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
+const DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID  = '04afb677006541d5a50fa770f9a8fba8';
 const MIN_SLOTS = 3;
 
 let projects = [];
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 function showToast(msg) {
   const el = document.getElementById('toast');
@@ -161,21 +166,21 @@ function renderPj() {
     d.className = 'pji';
     d.innerHTML = `
       <div class="pji-head">
-        <span class="pji-name">${pj.name}</span>
+        <span class="pji-name">${esc(pj.name)}</span>
         <div class="pji-right">
           ${statusLabel(pj.status)}
-          <button class="xbtn" onclick="delPj('${pj.pageId}', event)">✕</button>
+          <button class="xbtn" onclick="delPj('${esc(pj.pageId)}', event)">✕</button>
         </div>
       </div>
-      <div class="pji-bar-wrap" id="bar-${pj.pageId}">
+      <div class="pji-bar-wrap" id="bar-${esc(pj.pageId)}">
         <div class="pji-fill" style="width:${pj.pct}%"></div>
       </div>
       <div class="pji-foot">
         <input class="pji-pct" value="${pj.pct}%"
           onfocus="this.value='${pj.pct}'"
-          onblur="setPct('${pj.pageId}', this.value)"
+          onblur="setPct('${esc(pj.pageId)}', this.value)"
           onkeydown="if(event.key==='Enter')this.blur()">
-        <div class="pji-tags">${(pj.tags||[]).map(t=>`<span class="pji-tag">${t}</span>`).join('')}</div>
+        <div class="pji-tags">${(pj.tags||[]).map(t=>`<span class="pji-tag">${esc(t)}</span>`).join('')}</div>
       </div>
     `;
     el.appendChild(d);
@@ -197,7 +202,7 @@ async function loadFromNotion() {
   try {
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         filter: { property: 'Status', select: { does_not_equal: '완료' } },
         sorts: [{ timestamp: 'created_time', direction: 'descending' }]
@@ -232,7 +237,7 @@ async function setPct(pageId, val) {
     }
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ properties: props })
     });
   } catch(e) { showToast('저장 실패'); }
@@ -245,7 +250,7 @@ async function addPj() {
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         parent: { database_id: DB_ID },
         properties: {
@@ -266,7 +271,7 @@ async function delPj(pageId, e) {
   try {
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ archived: true })
     });
     projects = projects.filter(p => p.pageId !== pageId);
