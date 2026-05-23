@@ -85,10 +85,12 @@ function renderLog() {
   }
 }
 
+function localDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 function loadFromNotion() {
-  var today = new Date();
-  today.setHours(0,0,0,0);
-  var dateStr = today.toISOString().slice(0,10);
+  var dateStr = localDate(new Date());
   fetch(PROXY + '?path=databases/' + DB_ID + '/query', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
@@ -117,7 +119,7 @@ function addLog() {
   document.getElementById('log-inp').value = '';
   var n = new Date();
   var time = pad(n.getHours()) + ':' + pad(n.getMinutes());
-  var dateStr = n.toISOString().slice(0,10);
+  var dateStr = localDate(n);
   fetch(PROXY + '?path=pages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
