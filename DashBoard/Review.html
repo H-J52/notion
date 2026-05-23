@@ -91,6 +91,7 @@ html, body { background: var(--bg); color: var(--tx); font-family: var(--font); 
 <div class="toast" id="toast"></div>
 
 <script>
+const DASHBOARD_SECRET = localStorage.getItem('dvf_secret') || '';
 const PROXY  = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID  = '365313d0a26d48898b47cef7bcf54a4a';
 const DATE_KEY = 'devflow_review_date';
@@ -121,7 +122,7 @@ async function loadTodayReview() {
     const today = toDateStr(new Date());
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         filter: { property: 'Date', title: { equals: today } }
       })
@@ -165,14 +166,14 @@ async function saveReview() {
       // 오늘 리뷰 업데이트
       await fetch(`${PROXY}?path=pages/${todayPageId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
         body: JSON.stringify({ properties: props })
       });
     } else {
       // 새 리뷰 생성
       const res = await fetch(`${PROXY}?path=pages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
         body: JSON.stringify({ parent: { database_id: DB_ID }, properties: props })
       });
       const page = await res.json();

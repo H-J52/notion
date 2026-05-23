@@ -128,6 +128,7 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
+const DASHBOARD_SECRET = localStorage.getItem('dvf_secret') || '';
 const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID    = 'dde3b94ed40e4bf6876f539dd46d4c2e';
 const DATE_KEY = 'devflow_goals_date';
@@ -184,7 +185,7 @@ function renderG() {
 
 async function loadTagOptions() {
   try {
-    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`);
+    const res = await fetch(`${PROXY}?path=databases/${DB_ID}`, { headers: { 'x-dashboard-secret': DASHBOARD_SECRET } });
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('g-tag');
@@ -198,7 +199,7 @@ async function loadFromNotion() {
     const monday = getMondayStr();
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}/query`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         filter: { property: 'Week', rich_text: { equals: monday } },
         sorts: [{ timestamp: 'created_time', direction: 'ascending' }]
@@ -223,7 +224,7 @@ async function toggleG(g) {
   try {
     await fetch(`${PROXY}?path=pages/${g.pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         properties: { Status: { select: { name: g.done ? 'Done' : 'Todo' } } }
       })
@@ -240,7 +241,7 @@ async function addG() {
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({
         parent: { database_id: DB_ID },
         properties: {
@@ -262,7 +263,7 @@ async function delG(pageId, e) {
   try {
     await fetch(`${PROXY}?path=pages/${pageId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ archived: true })
     });
     goals = goals.filter(g => g.pageId !== pageId);

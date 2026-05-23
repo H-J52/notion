@@ -63,6 +63,7 @@ html,body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size
 </div>
 <div class="toast" id="toast"></div>
 <script>
+var DASHBOARD_SECRET = localStorage.getItem('dvf_secret') || '';
 var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
 var DB_ID = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 var links = [];
@@ -109,7 +110,7 @@ function renderL() {
 function loadFromNotion() {
   fetch(PROXY + '?path=databases/' + DB_ID + '/query', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
     body: JSON.stringify({
       filter: { property: 'Type', select: { equals: 'Link' } },
       sorts: [{ timestamp: 'created_time', direction: 'descending' }]
@@ -142,7 +143,7 @@ function addLink() {
   document.getElementById('l-title').value = '';
   fetch(PROXY + '?path=pages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
     body: JSON.stringify({
       parent: { database_id: DB_ID },
       properties: {
@@ -165,7 +166,7 @@ function delLink(pageId, e) {
   e.stopPropagation();
   fetch(PROXY + '?path=pages/' + pageId, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
     body: JSON.stringify({ archived: true })
   })
   .then(function() {
