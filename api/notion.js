@@ -1,16 +1,5 @@
 module.exports = async function handler(req, res) {
-  const NOTION_API_KEY    = process.env.NOTION_API_KEY;
-  const DASHBOARD_SECRET  = process.env.DASHBOARD_SECRET;
-
-  // ── 1. Secret token 인증 ──────────────────────────────────────────────────
-  if (!DASHBOARD_SECRET) {
-    return res.status(500).json({ error: 'DASHBOARD_SECRET not configured' });
-  }
-  if (req.headers['x-dashboard-secret'] !== DASHBOARD_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  // ── 2. CORS (사용하는 메서드만 허용, DELETE 제외) ─────────────────────────
+  // ── 1. CORS 헤더는 항상 맨 먼저 (브라우저 preflight OPTIONS가 auth 전에 통과해야 함)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-dashboard-secret');
@@ -19,11 +8,21 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // ── 2. Secret token 인증
+  const DASHBOARD_SECRET = process.env.DASHBOARD_SECRET;
+  if (!DASHBOARD_SECRET) {
+    return res.status(500).json({ error: 'DASHBOARD_SECRET not configured' });
+  }
+  if (req.headers['x-dashboard-secret'] !== DASHBOARD_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const NOTION_API_KEY = process.env.NOTION_API_KEY;
   if (!NOTION_API_KEY) {
     return res.status(500).json({ error: 'NOTION_API_KEY not set' });
   }
 
-  // ── 3. path 화이트리스트 ──────────────────────────────────────────────────
+  // ── 3. path 화이트리스트
   const notionPath = req.query.path;
   if (!notionPath) {
     return res.status(400).json({ error: 'path query parameter required' });
@@ -38,7 +37,7 @@ module.exports = async function handler(req, res) {
     return res.status(403).json({ error: 'Forbidden path' });
   }
 
-  // ── 4. path별 허용 메서드 제한 ────────────────────────────────────────────
+  // ── 4. path별 허용 메서드 제한
   const allowedMethods = isDbQuery  ? ['POST']
     : isDbSchema ? ['GET']
     : isNewPage  ? ['POST']
@@ -49,7 +48,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // ── 5. Notion API 프록시 ──────────────────────────────────────────────────
+  // ── 5. Notion API 프록시
   const notionUrl = `https://api.notion.com/v1/${notionPath}`;
 
   try {
