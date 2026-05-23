@@ -63,7 +63,7 @@ html,body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size
 </div>
 <div class="toast" id="toast"></div>
 <script>
-var DASHBOARD_SECRET = localStorage.getItem('dvf_secret') || '';
+var DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
 var DB_ID = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 var links = [];

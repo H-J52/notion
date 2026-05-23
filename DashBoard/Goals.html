@@ -128,7 +128,7 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
-const DASHBOARD_SECRET = localStorage.getItem('dvf_secret') || '';
+const DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 const PROXY    = 'https://notion-phi-six.vercel.app/api/notion';
 const DB_ID    = 'dde3b94ed40e4bf6876f539dd46d4c2e';
 const DATE_KEY = 'devflow_goals_date';

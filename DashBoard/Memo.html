@@ -50,7 +50,7 @@ textarea.ainput{resize:none;height:60px;line-height:1.5;}
 </div>
 <div class="toast" id="toast"></div>
 <script>
-var DASHBOARD_SECRET = localStorage.getItem('dvf_secret') || '';
+var DASHBOARD_SECRET = new URLSearchParams(location.search).get('s') || '';
 var PROXY = 'https://notion-phi-six.vercel.app/api/notion';
 var DB_ID = '838d3be1db5840ebaf4ae2cf9b0e91fd';
 var memos = [];
