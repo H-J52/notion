@@ -234,9 +234,12 @@ async function toggleG(g) {
   } catch(e) { showToast('저장 실패'); }
 }
 
+let adding = false;
 async function addG() {
+  if (adding) return;
   const t = document.getElementById('g-inp').value.trim();
   if (!t) return;
+  adding = true;
   const tag = document.getElementById('g-tag').value;
   const monday = getMondayStr();
   try {
@@ -259,6 +262,7 @@ async function addG() {
     renderG();
     document.getElementById('g-inp').value = '';
   } catch(e) { showToast('추가 실패'); }
+  finally { adding = false; }
 }
 
 async function delG(pageId, e) {

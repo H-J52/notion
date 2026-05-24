@@ -219,10 +219,12 @@ async function toggleR(r) {
   }
 }
 
+let adding = false;
 async function addR() {
+  if (adding) return;
   const t = document.getElementById('r-inp').value.trim();
   if (!t) return;
-  document.getElementById('r-inp').value = '';
+  adding = true;
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
@@ -237,10 +239,13 @@ async function addR() {
       })
     });
     const page = await res.json();
+    document.getElementById('r-inp').value = '';
     routines.push({ pageId: page.id, t, done: false });
     renderR();
   } catch(e) {
     showToast('추가 실패');
+  } finally {
+    adding = false;
   }
 }
 
