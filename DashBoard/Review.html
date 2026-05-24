@@ -127,6 +127,7 @@ async function loadTodayReview() {
         filter: { property: 'Date', title: { equals: today } }
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     if (data.results?.length) {
       const p = data.results[0];
@@ -176,6 +177,7 @@ async function saveReview() {
         headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
         body: JSON.stringify({ parent: { database_id: DB_ID }, properties: props })
       });
+      if (!res.ok) throw new Error(res.status);
       const page = await res.json();
       todayPageId = page.id;
     }

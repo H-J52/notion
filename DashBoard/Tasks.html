@@ -213,6 +213,7 @@ function renderT() {
 async function loadTagOptions() {
   try {
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}`, { headers: { 'x-dashboard-secret': DASHBOARD_SECRET } });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('t-tag');
@@ -245,6 +246,7 @@ async function loadFromNotion() {
         sorts: [{ timestamp: 'created_time', direction: 'descending' }]
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     tasks = data.results.map(p => ({
       pageId: p.id,
@@ -283,7 +285,6 @@ async function addT() {
   if (!t) return;
   const p   = document.getElementById('t-prio').value;
   const tag = document.getElementById('t-tag').value;
-  document.getElementById('t-inp').value = '';
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
@@ -298,9 +299,11 @@ async function addT() {
         }
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const page = await res.json();
     tasks.unshift({ pageId: page.id, t, p, tags: tag ? [tag] : [], done: false, createdAt: new Date().toISOString() });
     renderT();
+    document.getElementById('t-inp').value = '';
   } catch(e) { showToast('추가 실패'); }
 }
 

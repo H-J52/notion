@@ -99,7 +99,7 @@ function loadFromNotion() {
       sorts: [{ timestamp: 'created_time', direction: 'ascending' }]
     })
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(function(data) {
     logs = data.results.map(function(p) {
       return {
@@ -116,7 +116,6 @@ function loadFromNotion() {
 function addLog() {
   var v = document.getElementById('log-inp').value.trim();
   if (!v) return;
-  document.getElementById('log-inp').value = '';
   var n = new Date();
   var time = pad(n.getHours()) + ':' + pad(n.getMinutes());
   var dateStr = localDate(n);
@@ -133,8 +132,9 @@ function addLog() {
       }
     })
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(function(page) {
+    document.getElementById('log-inp').value = '';
     logs.push({ pageId: page.id, time: time, txt: v });
     renderLog();
   })

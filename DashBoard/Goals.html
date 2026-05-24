@@ -186,6 +186,7 @@ function renderG() {
 async function loadTagOptions() {
   try {
     const res = await fetch(`${PROXY}?path=databases/${DB_ID}`, { headers: { 'x-dashboard-secret': DASHBOARD_SECRET } });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     const options = data.properties?.Tag?.multi_select?.options || [];
     const sel = document.getElementById('g-tag');
@@ -205,6 +206,7 @@ async function loadFromNotion() {
         sorts: [{ timestamp: 'created_time', direction: 'ascending' }]
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     goals = data.results.map(p => ({
       pageId: p.id,
@@ -236,7 +238,6 @@ async function addG() {
   const t = document.getElementById('g-inp').value.trim();
   if (!t) return;
   const tag = document.getElementById('g-tag').value;
-  document.getElementById('g-inp').value = '';
   const monday = getMondayStr();
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
@@ -252,9 +253,11 @@ async function addG() {
         }
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const page = await res.json();
     goals.push({ pageId: page.id, t, tags: tag ? [tag] : [], done: false });
     renderG();
+    document.getElementById('g-inp').value = '';
   } catch(e) { showToast('추가 실패'); }
 }
 

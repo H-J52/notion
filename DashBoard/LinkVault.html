@@ -116,7 +116,7 @@ function loadFromNotion() {
       sorts: [{ timestamp: 'created_time', direction: 'descending' }]
     })
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(function(data) {
     links = data.results.map(function(p) {
       return {
@@ -139,8 +139,6 @@ function addLink() {
   var url = document.getElementById('l-url').value.trim();
   var title = document.getElementById('l-title').value.trim();
   if (!url) return;
-  document.getElementById('l-url').value = '';
-  document.getElementById('l-title').value = '';
   fetch(PROXY + '?path=pages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
@@ -154,8 +152,10 @@ function addLink() {
       }
     })
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(function(page) {
+    document.getElementById('l-url').value = '';
+    document.getElementById('l-title').value = '';
     links.unshift({ pageId: page.id, title: title || url, url: url, tag: '' });
     renderL();
   })
