@@ -192,6 +192,7 @@ async function loadFromNotion() {
       headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ sorts: [{ property: 'Order', direction: 'ascending' }] })
     });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     routines = data.results.map(p => ({
       pageId: p.id,
@@ -259,14 +260,14 @@ async function delR(pageId, e) {
 }
 
 async function resetRoutine() {
-  for (const r of routines) {
-    r.done = false;
-    await fetch(`${PROXY}?path=pages/${r.pageId}`, {
+  routines.forEach(r => r.done = false);
+  await Promise.all(routines.map(r =>
+    fetch(`${PROXY}?path=pages/${r.pageId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
       body: JSON.stringify({ properties: { Done: { checkbox: false } } })
-    });
-  }
+    })
+  ));
   renderR();
   showToast('루틴 초기화됨');
 }

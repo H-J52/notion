@@ -208,6 +208,7 @@ async function loadFromNotion() {
         sorts: [{ timestamp: 'created_time', direction: 'descending' }]
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const data = await res.json();
     projects = data.results.map(p => ({
       pageId: p.id,
@@ -246,7 +247,6 @@ async function setPct(pageId, val) {
 async function addPj() {
   const name = document.getElementById('pj-inp').value.trim();
   if (!name) return;
-  document.getElementById('pj-inp').value = '';
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
@@ -260,9 +260,11 @@ async function addPj() {
         }
       })
     });
+    if (!res.ok) throw new Error(res.status);
     const page = await res.json();
     projects.unshift({ pageId: page.id, name, pct: 0, status: '진행중', tags: [] });
     renderPj();
+    document.getElementById('pj-inp').value = '';
   } catch(e) { showToast('추가 실패'); }
 }
 
