@@ -280,9 +280,12 @@ async function toggleT(t) {
   } catch(e) { showToast('저장 실패'); }
 }
 
+let adding = false;
 async function addT() {
+  if (adding) return;
   const t = document.getElementById('t-inp').value.trim();
   if (!t) return;
+  adding = true;
   const p   = document.getElementById('t-prio').value;
   const tag = document.getElementById('t-tag').value;
   try {
@@ -305,6 +308,7 @@ async function addT() {
     renderT();
     document.getElementById('t-inp').value = '';
   } catch(e) { showToast('추가 실패'); }
+  finally { adding = false; }
 }
 
 async function delT(pageId, e) {

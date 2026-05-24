@@ -113,9 +113,12 @@ function loadFromNotion() {
   .catch(function(){ showToast('로드 실패'); });
 }
 
+var adding = false;
 function addLog() {
+  if (adding) return;
   var v = document.getElementById('log-inp').value.trim();
   if (!v) return;
+  adding = true;
   var n = new Date();
   var time = pad(n.getHours()) + ':' + pad(n.getMinutes());
   var dateStr = localDate(n);
@@ -137,7 +140,8 @@ function addLog() {
     logs.push({ pageId: page.id, time: time, txt: v });
     renderLog();
   })
-  .catch(function(){ showToast('추가 실패'); });
+  .catch(function(){ showToast('추가 실패'); })
+  .finally(function(){ adding = false; });
 }
 
 function delLog(pageId, e) {

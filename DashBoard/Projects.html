@@ -244,9 +244,12 @@ async function setPct(pageId, val) {
   } catch(e) { showToast('저장 실패'); }
 }
 
+let adding = false;
 async function addPj() {
+  if (adding) return;
   const name = document.getElementById('pj-inp').value.trim();
   if (!name) return;
+  adding = true;
   try {
     const res = await fetch(`${PROXY}?path=pages`, {
       method: 'POST',
@@ -266,6 +269,7 @@ async function addPj() {
     renderPj();
     document.getElementById('pj-inp').value = '';
   } catch(e) { showToast('추가 실패'); }
+  finally { adding = false; }
 }
 
 async function delPj(pageId, e) {

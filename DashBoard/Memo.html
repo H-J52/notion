@@ -102,10 +102,13 @@ function loadFromNotion() {
   .catch(function(){ showToast('로드 실패'); });
 }
 
+var adding = false;
 function addMemo() {
+  if (adding) return;
   var title = document.getElementById('m-title').value.trim();
   var content = document.getElementById('m-content').value.trim();
   if (!title) return;
+  adding = true;
   fetch(PROXY + '?path=pages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-dashboard-secret': DASHBOARD_SECRET },
@@ -126,7 +129,8 @@ function addMemo() {
     memos.unshift({ pageId: page.id, title: title, content: content });
     renderM();
   })
-  .catch(function(){ showToast('추가 실패'); });
+  .catch(function(){ showToast('추가 실패'); })
+  .finally(function(){ adding = false; });
 }
 
 function delMemo(pageId, e) {
